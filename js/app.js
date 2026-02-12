@@ -135,9 +135,7 @@ const BundleUI = {
 // Main application controller
 const App = {
 
-    async init() {
-        await Database.loadAll();
-
+    init() {
         this.populateCableTypes();
         CanvasEditor.init();
         this.setMode('addNode');

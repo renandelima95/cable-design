@@ -212,8 +212,20 @@
         </div>
     </div>
 
-    <!-- Scripts loaded in dependency order -->
+    <!-- Core modules (loaded first) -->
     <script src="js/database.js"></script>
+
+    <!-- Data files (populate Database arrays) -->
+    <script src="data/cables.js"></script>
+    <script src="data/braid_tubes.js"></script>
+    <script src="data/tube_shrinks.js"></script>
+    <script src="data/marker_sleeves.js"></script>
+    <script src="data/clear_tube_shrinks.js"></script>
+    <script src="data/connectors.js"></script>
+    <script src="data/backshells.js"></script>
+    <script src="data/boot_shrinks.js"></script>
+
+    <!-- Application modules -->
     <script src="js/circle-packing.js"></script>
     <script src="js/routing.js"></script>
     <script src="js/components.js"></script>
@@ -222,11 +234,7 @@
     <script src="js/canvas.js"></script>
     <script src="js/app.js"></script>
     <script>
-        // Initialize the application after all modules and databases are loaded
-        App.init().catch(err => {
-            console.error('Failed to initialize application:', err);
-            alert('Erro ao inicializar. Verifique se está rodando via servidor local (ex: python -m http.server).');
-        });
+        App.init();
     </script>
 </body>
 </html>

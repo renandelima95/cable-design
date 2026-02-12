@@ -1,4 +1,8 @@
-[
+// =============================================
+// Cable Types Database
+// Edit this file to add/remove/modify cables
+// =============================================
+Database.cables = [
   {
     "PN": "",
     "MPN": "",
@@ -239,4 +243,4 @@
     "awg": "17#",
     "name": "17#"
   }
-]
+];
