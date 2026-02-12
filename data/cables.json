@@ -1,0 +1,242 @@
+[
+  {
+    "PN": "",
+    "MPN": "",
+    "description": "20 AWG Wire",
+    "UOM": "m",
+    "nominalDiameter": 1.45,
+    "color": "#FF6B6B",
+    "awg": "20#",
+    "name": "20#"
+  },
+  {
+    "PN": "",
+    "MPN": "",
+    "description": "22 AWG Shielded Wire",
+    "UOM": "m",
+    "nominalDiameter": 2.0574,
+    "color": "#4ECDC4",
+    "awg": "22#",
+    "name": "22# SHD"
+  },
+  {
+    "PN": "",
+    "MPN": "",
+    "description": "2-conductor 22 AWG Shielded",
+    "UOM": "m",
+    "nominalDiameter": 2.89,
+    "color": "#45B7D1",
+    "awg": "22#",
+    "name": "2x 22# SHD"
+  },
+  {
+    "PN": "",
+    "MPN": "",
+    "description": "3-conductor 22 AWG Shielded",
+    "UOM": "m",
+    "nominalDiameter": 3.2258,
+    "color": "#FFA07A",
+    "awg": "22#",
+    "name": "3x 22# SHD"
+  },
+  {
+    "PN": "",
+    "MPN": "",
+    "description": "4-conductor 22 AWG",
+    "UOM": "m",
+    "nominalDiameter": 3.96,
+    "color": "#98D8C8",
+    "awg": "22#",
+    "name": "4x 22#"
+  },
+  {
+    "PN": "",
+    "MPN": "",
+    "description": "6-conductor 22 AWG",
+    "UOM": "m",
+    "nominalDiameter": 4.166,
+    "color": "#F7DC6F",
+    "awg": "22#",
+    "name": "6x 22#"
+  },
+  {
+    "PN": "",
+    "MPN": "",
+    "description": "3-conductor 22 AWG",
+    "UOM": "m",
+    "nominalDiameter": 2.69,
+    "color": "#BB8FCE",
+    "awg": "22#",
+    "name": "3x 22#"
+  },
+  {
+    "PN": "",
+    "MPN": "",
+    "description": "22 AWG Wire",
+    "UOM": "m",
+    "nominalDiameter": 1.0897,
+    "color": "#85C1E2",
+    "awg": "22#",
+    "name": "22#"
+  },
+  {
+    "PN": "",
+    "MPN": "",
+    "description": "24 AWG Shielded Wire",
+    "UOM": "m",
+    "nominalDiameter": 1.96,
+    "color": "#F8B739",
+    "awg": "24#",
+    "name": "24# SHD"
+  },
+  {
+    "PN": "",
+    "MPN": "",
+    "description": "24 AWG Wire",
+    "UOM": "m",
+    "nominalDiameter": 0.96,
+    "color": "#52B788",
+    "awg": "24#",
+    "name": "24#"
+  },
+  {
+    "PN": "",
+    "MPN": "",
+    "description": "26 AWG Shielded Wire",
+    "UOM": "m",
+    "nominalDiameter": 1.778,
+    "color": "#FF8FAB",
+    "awg": "26#",
+    "name": "26# SHD"
+  },
+  {
+    "PN": "",
+    "MPN": "",
+    "description": "26 AWG Wire",
+    "UOM": "m",
+    "nominalDiameter": 1.6256,
+    "color": "#6A8CAF",
+    "awg": "26#",
+    "name": "26AWG"
+  },
+  {
+    "PN": "",
+    "MPN": "",
+    "description": "2-conductor 26 AWG",
+    "UOM": "m",
+    "nominalDiameter": 2.33,
+    "color": "#FFD93D",
+    "awg": "26#",
+    "name": "2x 26#"
+  },
+  {
+    "PN": "",
+    "MPN": "",
+    "description": "3-conductor 26 AWG",
+    "UOM": "m",
+    "nominalDiameter": 2.5908,
+    "color": "#95E1D3",
+    "awg": "26#",
+    "name": "3x 26#"
+  },
+  {
+    "PN": "",
+    "MPN": "",
+    "description": "26 AWG Wire",
+    "UOM": "m",
+    "nominalDiameter": 0.81,
+    "color": "#F38181",
+    "awg": "26#",
+    "name": "#26"
+  },
+  {
+    "PN": "",
+    "MPN": "",
+    "description": "Triaxial Cable",
+    "UOM": "m",
+    "nominalDiameter": 3.7084,
+    "color": "#AA96DA",
+    "awg": "TRIAX",
+    "name": "TRIAX"
+  },
+  {
+    "PN": "",
+    "MPN": "",
+    "description": "Coaxial Cable",
+    "UOM": "m",
+    "nominalDiameter": 2.54,
+    "color": "#FCBAD3",
+    "awg": "COAX",
+    "name": "COAX"
+  },
+  {
+    "PN": "",
+    "MPN": "",
+    "description": "1/0 AWG Wire",
+    "UOM": "m",
+    "nominalDiameter": 15.8242,
+    "color": "#A8D8EA",
+    "awg": "1/0#",
+    "name": "1/0#"
+  },
+  {
+    "PN": "",
+    "MPN": "",
+    "description": "1-conductor 12 AWG",
+    "UOM": "m",
+    "nominalDiameter": 2.6,
+    "color": "#FFAAA6",
+    "awg": "12#",
+    "name": "1x 12#"
+  },
+  {
+    "PN": "",
+    "MPN": "",
+    "description": "8 AWG Wire",
+    "UOM": "m",
+    "nominalDiameter": 7.2898,
+    "color": "#FF8C94",
+    "awg": "8#",
+    "name": "8#"
+  },
+  {
+    "PN": "",
+    "MPN": "",
+    "description": "4 AWG Wire",
+    "UOM": "m",
+    "nominalDiameter": 10.5918,
+    "color": "#C3AED6",
+    "awg": "4#",
+    "name": "4#"
+  },
+  {
+    "PN": "",
+    "MPN": "",
+    "description": "2-conductor 24 AWG",
+    "UOM": "m",
+    "nominalDiameter": 3.124,
+    "color": "#E74C3C",
+    "awg": "24#",
+    "name": "2x24#"
+  },
+  {
+    "PN": "",
+    "MPN": "",
+    "description": "12 AWG Wire",
+    "UOM": "m",
+    "nominalDiameter": 5.0,
+    "color": "#C3AED6",
+    "awg": "12#",
+    "name": "12#"
+  },
+  {
+    "PN": "",
+    "MPN": "",
+    "description": "17 AWG Wire",
+    "UOM": "m",
+    "nominalDiameter": 2.0,
+    "color": "#FFD93D",
+    "awg": "17#",
+    "name": "17#"
+  }
+]
