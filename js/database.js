@@ -1,8 +1,10 @@
 // ========================================
-// Database Loader - Loads all JSON databases
+// Database - Component lookup methods
+// Data is loaded by data/*.js script tags
 // ========================================
 
 const Database = {
+    // These arrays are populated by data/*.js files loaded via <script> tags
     cables: [],
     braidTubes: [],
     tubeShrinks: [],
@@ -11,35 +13,6 @@ const Database = {
     connectors: [],
     backshells: [],
     bootShrinks: [],
-
-    async loadAll() {
-        const files = [
-            { key: 'cables', path: 'data/cables.json' },
-            { key: 'braidTubes', path: 'data/braid_tubes.json' },
-            { key: 'tubeShrinks', path: 'data/tube_shrinks.json' },
-            { key: 'markerSleeves', path: 'data/marker_sleeves.json' },
-            { key: 'clearTubeShrinks', path: 'data/clear_tube_shrinks.json' },
-            { key: 'connectors', path: 'data/connectors.json' },
-            { key: 'backshells', path: 'data/backshells.json' },
-            { key: 'bootShrinks', path: 'data/boot_shrinks.json' }
-        ];
-
-        const results = await Promise.allSettled(
-            files.map(f => fetch(f.path).then(r => {
-                if (!r.ok) throw new Error(`Failed to load ${f.path}: ${r.status}`);
-                return r.json();
-            }))
-        );
-
-        results.forEach((result, i) => {
-            if (result.status === 'fulfilled') {
-                this[files[i].key] = result.value;
-            } else {
-                console.warn(`Could not load ${files[i].path}:`, result.reason);
-                this[files[i].key] = [];
-            }
-        });
-    },
 
     getCable(name) {
         return this.cables.find(c => c.name === name) || null;
