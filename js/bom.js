@@ -96,7 +96,7 @@ const BomUI = {
 
         for (const [segment, wires] of Object.entries(segmentBundles)) {
             const bundleData = BundleUI._bundleCache[segment] || calculateWireBundle(wires);
-            const suggestions = ComponentSuggestions.getSuggestionsForSegment(bundleData.diameter);
+            const suggestions = ComponentSuggestions.getSuggestionsForSegment(bundleData.diameter, segment);
             const segmentLengthM = (segmentDistanceMap[segment] || 0) * (1 + margin) / 1000;
 
             // 4. Tube Shrink (category 4) - use override if set
@@ -107,9 +107,10 @@ const BomUI = {
                 addItem(ts.PN, ts.description, ts.UOM || 'm', qty, ts.MPN, 4);
             }
 
-            // 5. Braid Tube (category 5)
-            if (suggestions.braidTube) {
-                const bt = suggestions.braidTube;
+            // 5. Braid Tube (category 5) - use override if set
+            const selectedBraidTube = ComponentSuggestions.getSelectedBraidTube(segment, bundleData.diameter);
+            if (selectedBraidTube) {
+                const bt = selectedBraidTube;
                 const qty = bt.UOM === 'un' ? 1 : segmentLengthM;
                 addItem(bt.PN, bt.description, bt.UOM || 'm', qty, bt.MPN, 5);
             }

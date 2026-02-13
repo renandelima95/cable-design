@@ -236,14 +236,57 @@ function calculateWireBundle(wires) {
     };
 }
 
-function drawWireBundle(canvasEl, bundleData) {
+function drawWireBundle(canvasEl, bundleData, braidTube) {
     const ctx = canvasEl.getContext('2d');
     const centerX = canvasEl.width / 2;
     const centerY = canvasEl.height / 2;
 
-    const scale = Math.min(canvasEl.width, canvasEl.height) / (bundleData.diameter * 1.2);
+    // Determine outermost diameter for scaling
+    let outerDiameter = bundleData.diameter;
+    if (braidTube) {
+        const braidOD = braidTube.nominalDiameter + 2 * (braidTube.wallThickness || 0);
+        outerDiameter = Math.max(outerDiameter, braidOD);
+    }
+
+    const scale = Math.min(canvasEl.width, canvasEl.height) / (outerDiameter * 1.2);
 
     ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+
+    // Braid tube ring
+    if (braidTube) {
+        const braidInnerR = (braidTube.nominalDiameter / 2) * scale;
+        const braidOuterR = (braidTube.nominalDiameter / 2 + (braidTube.wallThickness || 0)) * scale;
+        const tooSmall = bundleData.diameter > braidTube.nominalDiameter;
+
+        // Outer edge
+        ctx.strokeStyle = tooSmall ? '#e53e3e' : '#b8860b';
+        ctx.lineWidth = Math.max(2, (braidOuterR - braidInnerR));
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, (braidInnerR + braidOuterR) / 2, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Crosshatch pattern to suggest braid weave
+        ctx.strokeStyle = tooSmall ? 'rgba(229,62,62,0.3)' : 'rgba(184,134,11,0.3)';
+        ctx.lineWidth = 1;
+        const segments = 24;
+        for (let i = 0; i < segments; i++) {
+            const angle = (i / segments) * Math.PI * 2;
+            const cos = Math.cos(angle);
+            const sin = Math.sin(angle);
+            ctx.beginPath();
+            ctx.moveTo(centerX + braidInnerR * cos, centerY + braidInnerR * sin);
+            ctx.lineTo(centerX + braidOuterR * cos, centerY + braidOuterR * sin);
+            ctx.stroke();
+        }
+
+        // Label
+        ctx.fillStyle = tooSmall ? '#e53e3e' : '#b8860b';
+        ctx.font = '9px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(`Braid \u00D8${braidTube.nominalDiameter} mm`, centerX, centerY - braidOuterR - 3);
+    }
 
     // Outer circle (bundle boundary)
     ctx.strokeStyle = '#333';
