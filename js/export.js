@@ -53,7 +53,7 @@ const ExportManager = {
 
         for (const [segment, wires] of Object.entries(segmentBundles)) {
             const bundleData = calculateWireBundle(wires);
-            const suggestions = ComponentSuggestions.getSuggestionsForSegment(bundleData.diameter);
+            const suggestions = ComponentSuggestions.getSuggestionsForSegment(bundleData.diameter, segment);
 
             const wireGroups = {};
             wires.forEach(wire => {

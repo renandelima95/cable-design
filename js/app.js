@@ -79,7 +79,7 @@ const BundleUI = {
         for (const [segment, wires] of Object.entries(branchMap)) {
             const bundleData = this._bundleCache[segment];
             const canvasId = `bundle-${segment.replace(/[^a-zA-Z0-9]/g, '')}`;
-            const suggestions = ComponentSuggestions.getSuggestionsForSegment(bundleData.diameter);
+            const suggestions = ComponentSuggestions.getSuggestionsForSegment(bundleData.diameter, segment);
 
             html += `
                 <div class="bundle-item">
@@ -122,11 +122,12 @@ const BundleUI = {
 
         // Draw bundles using cached data (single computation)
         setTimeout(() => {
-            for (const [segment] of Object.entries(branchMap)) {
+            for (const [segment, wires] of Object.entries(branchMap)) {
                 const canvasId = `bundle-${segment.replace(/[^a-zA-Z0-9]/g, '')}`;
                 const canvasEl = document.getElementById(canvasId);
                 if (canvasEl && this._bundleCache[segment]) {
-                    drawWireBundle(canvasEl, this._bundleCache[segment]);
+                    const braidTube = ComponentSuggestions.getSelectedBraidTube(segment, this._bundleCache[segment].diameter);
+                    drawWireBundle(canvasEl, this._bundleCache[segment], braidTube);
                 }
             }
         }, 50);

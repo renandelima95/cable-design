@@ -20,9 +20,9 @@ const Database = {
 
     findBraidTube(bundleDiameter) {
         return this.braidTubes
-            .filter(bt => bt.minDiameter > 0 && bt.maxDiameter > 0)
-            .filter(bt => bundleDiameter >= bt.minDiameter && bundleDiameter <= bt.maxDiameter)
-            .sort((a, b) => a.maxDiameter - b.maxDiameter)[0] || null;
+            .filter(bt => bt.nominalDiameter > 0)
+            .filter(bt => bundleDiameter <= bt.nominalDiameter)
+            .sort((a, b) => a.nominalDiameter - b.nominalDiameter)[0] || null;
     },
 
     findTubeShrink(outerDiameter) {
