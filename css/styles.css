@@ -513,30 +513,39 @@ input:focus, select:focus {
 }
 
 /* ---- Connector Configuration (End Nodes) ---- */
-.connector-config-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-    gap: 20px;
-}
-
-.connector-card {
-    background: #f8f9fa;
-    border-radius: 10px;
-    padding: 20px;
-    border-left: 4px solid #e74c3c;
-}
-
-.connector-card-header {
+.connector-tabs {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
+    gap: 4px;
+    margin-bottom: 12px;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 0;
 }
 
-.connector-card-title {
-    font-size: 1.1em;
+.connector-tab {
+    padding: 8px 18px;
+    border: none;
+    background: #edf2f7;
+    border-radius: 6px 6px 0 0;
+    cursor: pointer;
+    font-size: 0.9em;
     font-weight: 600;
-    color: #2c3e50;
+    color: #4a5568;
+    transition: all 0.2s;
+}
+
+.connector-tab:hover {
+    background: #e2e8f0;
+}
+
+.connector-tab.active {
+    background: #e74c3c;
+    color: white;
+}
+
+.tab-type {
+    font-size: 0.8em;
+    font-weight: 400;
+    opacity: 0.8;
 }
 
 .node-type-badge {
@@ -556,97 +565,165 @@ input:focus, select:focus {
     background: #3498db;
 }
 
-.suggestion-box {
-    background: #edf2f7;
-    border-radius: 8px;
-    padding: 12px;
-    margin-top: 10px;
-}
-
-.suggestion-box-title {
-    font-weight: 600;
-    color: #4a5568;
-    margin-bottom: 8px;
-    font-size: 0.9em;
-}
-
-.suggestion-item {
-    display: flex;
-    justify-content: space-between;
-    padding: 5px 0;
-    font-size: 0.9em;
-}
-
-.suggestion-item .label {
-    color: #718096;
-}
-
-.suggestion-item .value {
-    font-weight: 600;
-    color: #2d3748;
-}
-
-/* ---- Ramification Detail ---- */
-.ramification-info {
-    background: #f7fafc;
-    border: 1px solid #e2e8f0;
+/* ---- Compact Connector Panel ---- */
+.cc-panel {
+    background: #f8f9fa;
     border-radius: 8px;
     padding: 14px;
-    margin-top: 12px;
+    border-left: 4px solid #e74c3c;
 }
 
-.ramification-title {
-    font-weight: 600;
-    color: #2d3748;
+.cc-bundle-bar {
+    font-size: 0.9em;
+    color: #4a5568;
     margin-bottom: 10px;
-    font-size: 0.95em;
-}
-
-.ramification-group {
-    margin-bottom: 10px;
-}
-
-.ramification-group:last-child {
-    margin-bottom: 0;
-}
-
-.ramification-group-title {
-    font-weight: 600;
-    font-size: 0.8em;
-    color: #718096;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 4px;
-    padding-bottom: 2px;
+    padding-bottom: 8px;
     border-bottom: 1px solid #e2e8f0;
 }
 
-.ramification-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 3px 0;
+.cc-section {
+    margin-bottom: 10px;
+}
+
+.cc-section-title {
+    font-weight: 600;
+    color: #4a5568;
+    font-size: 0.85em;
+    margin-bottom: 6px;
+}
+
+.cc-grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.cc-grid-3 label,
+.cc-grid-2 label {
+    font-size: 0.8em;
+    margin-bottom: 2px;
+}
+
+.cc-grid-3 select,
+.cc-grid-2 select {
+    padding: 6px 8px;
     font-size: 0.85em;
 }
 
-.ramification-label {
+.cc-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.cc-mpn-result {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 5px;
+    padding: 6px 10px;
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-size: 0.9em;
+}
+
+.mpn-inline-info {
+    font-size: 0.85em;
     color: #4a5568;
 }
 
-.ramification-value {
-    font-weight: 600;
-    color: #2d3748;
-    font-family: 'Courier New', monospace;
+.mpn-inline-info .label {
+    color: #718096;
+    font-weight: 500;
+    margin-right: 2px;
+    margin-left: 8px;
 }
 
-.ramification-row.fit-ok .ramification-value {
+.mpn-inline-info .label:first-child {
+    margin-left: 0;
+}
+
+/* ---- Compact Accessories (Backshell + Boot side by side) ---- */
+.cc-accessories {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.cc-accessory {
+    background: #edf2f7;
+    border-radius: 6px;
+    padding: 10px;
+}
+
+.cc-suggestion-line {
+    display: flex;
+    gap: 12px;
+    font-size: 0.8em;
+    color: #2d3748;
+    padding: 4px 0;
+    flex-wrap: wrap;
+}
+
+.cc-suggestion-line .label {
+    color: #718096;
+    font-weight: 500;
+}
+
+/* ---- Ramification Detail (compact table) ---- */
+.cc-ramification {
+    background: #f7fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 10px;
+    margin-top: 10px;
+}
+
+.cc-ramif-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82em;
+}
+
+.cc-ramif-table th {
+    text-align: left;
+    padding: 3px 8px;
+    color: #718096;
+    font-weight: 600;
+    font-size: 0.9em;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.cc-ramif-table td {
+    padding: 4px 8px;
+    color: #2d3748;
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+}
+
+.cc-ramif-side {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+    font-weight: 600 !important;
+    color: #4a5568 !important;
+    text-transform: uppercase;
+    font-size: 0.9em;
+    letter-spacing: 0.3px;
+}
+
+.cc-ramif-table tr.fit-ok td:not(.cc-ramif-side) {
     color: #2f855a;
 }
 
-.ramification-row.fit-warn .ramification-value {
+.cc-ramif-table tr.fit-warn td:not(.cc-ramif-side) {
     color: #b7791f;
 }
 
-.ramification-row.fit-error .ramification-value {
+.cc-ramif-table tr.fit-error td:not(.cc-ramif-side) {
     color: #c53030;
 }
 
