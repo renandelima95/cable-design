@@ -727,6 +727,26 @@ input:focus, select:focus {
     color: #c53030;
 }
 
+/* ---- Boot Shrink Comparison Charts ---- */
+.cc-boot-charts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.cc-boot-chart-col {
+    min-width: 0;
+    overflow: hidden;
+}
+
+.cc-boot-canvas {
+    display: block;
+    width: 100%;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+}
+
 /* ---- Margin Control ---- */
 .margin-control {
     background: #fff3cd;

@@ -346,10 +346,13 @@ const ConnectorUI = {
                 </div>
             </div>
 
-            ${this.renderRamificationInfo(node.name, selectedBackshell, selectedBootShrink, bundleDiameter)}
+            ${this.renderRamificationInfo(node.name, selectedBackshell, selectedBootShrink, bundleDiameter, compatibleBootShrinks)}
         </div>`;
 
         container.innerHTML = html;
+
+        // Draw boot shrink charts after DOM is ready
+        this.drawBootShrinkCharts(node.name, compatibleBootShrinks, selectedBootShrink, selectedBackshell, bundleDiameter);
     },
 
     renderSuggestion(item) {
@@ -430,7 +433,7 @@ const ConnectorUI = {
         BomUI.markDirty();
     },
 
-    renderRamificationInfo(nodeName, backshell, bootShrink, bundleDiameter) {
+    renderRamificationInfo(nodeName, backshell, bootShrink, bundleDiameter, compatibleBootShrinks) {
         if (!backshell && !bootShrink) {
             return '';
         }
@@ -458,6 +461,8 @@ const ConnectorUI = {
             else wireFit = 'fit-ok';
         }
 
+        const showChart = compatibleBootShrinks && compatibleBootShrinks.length > 0;
+
         return `
             <div class="cc-ramification">
                 <div class="cc-section-title">Ramification Detail</div>
@@ -483,7 +488,208 @@ const ConnectorUI = {
                         </tr>
                     </tbody>
                 </table>
+                ${showChart ? `
+                <div class="cc-boot-charts">
+                    <div class="cc-boot-chart-col">
+                        <canvas id="bootChartBS_${nodeName}" class="cc-boot-canvas" width="100" height="100"></canvas>
+                    </div>
+                    <div class="cc-boot-chart-col">
+                        <canvas id="bootChartBundle_${nodeName}" class="cc-boot-canvas" width="100" height="100"></canvas>
+                    </div>
+                </div>` : ''}
             </div>`;
+    },
+
+    drawBootShrinkCharts(nodeName, compatibleBootShrinks, selectedBootShrink, backshell, bundleDiameter) {
+        if (!compatibleBootShrinks || compatibleBootShrinks.length === 0) return;
+
+        const bsOD = backshell ? backshell.outputExternalDiameter : null;
+        const bundle = bundleDiameter > 0 ? bundleDiameter : null;
+        const selectedMPN = selectedBootShrink ? selectedBootShrink.MPN : null;
+
+        this._drawChart(
+            `bootChartBS_${nodeName}`, compatibleBootShrinks, selectedMPN,
+            bsOD, 'minBackshellDiameter', 'maxBackshellDiameter', 'Boot (Backshell Side)'
+        );
+        this._drawChart(
+            `bootChartBundle_${nodeName}`, compatibleBootShrinks, selectedMPN,
+            bundle, 'minBundleDiameter', 'maxBundleDiameter', 'Boot (Cable Side)'
+        );
+    },
+
+    _drawChart(canvasId, boots, selectedMPN, actualValue, minKey, maxKey, title) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+
+        const dpr = window.devicePixelRatio || 1;
+        const rowH = 22;
+        const labelW = 72;
+        const padT = 28;
+        const padB = 22;
+        const padR = 12;
+        const chartW = canvas.parentElement.clientWidth;
+        const chartH = padT + boots.length * rowH + padB;
+
+        canvas.style.width = '100%';
+        canvas.style.height = chartH + 'px';
+        canvas.width = chartW * dpr;
+        canvas.height = chartH * dpr;
+
+        const ctx = canvas.getContext('2d');
+        ctx.scale(dpr, dpr);
+
+        // Background
+        ctx.fillStyle = '#f7fafc';
+        ctx.fillRect(0, 0, chartW, chartH);
+
+        // Compute scale
+        let scaleMin = Infinity, scaleMax = 0;
+        boots.forEach(b => {
+            scaleMin = Math.min(scaleMin, b[minKey]);
+            scaleMax = Math.max(scaleMax, b[maxKey]);
+        });
+        if (actualValue !== null) {
+            scaleMin = Math.min(scaleMin, actualValue);
+            scaleMax = Math.max(scaleMax, actualValue);
+        }
+        const pad = (scaleMax - scaleMin) * 0.1 || 2;
+        scaleMin = Math.max(0, scaleMin - pad);
+        scaleMax = scaleMax + pad;
+
+        const barAreaX = labelW;
+        const barAreaW = chartW - labelW - padR;
+        const toX = (v) => barAreaX + ((v - scaleMin) / (scaleMax - scaleMin)) * barAreaW;
+
+        // Title
+        ctx.font = 'bold 11px Segoe UI, sans-serif';
+        ctx.fillStyle = '#4a5568';
+        ctx.textBaseline = 'top';
+        ctx.fillText(title, 4, 4);
+
+        // Grid lines
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 0.5;
+        const step = this._niceStep(scaleMin, scaleMax, 5);
+        const gridStart = Math.ceil(scaleMin / step) * step;
+        ctx.font = '9px Segoe UI, sans-serif';
+        ctx.fillStyle = '#a0aec0';
+        ctx.textBaseline = 'top';
+        for (let v = gridStart; v <= scaleMax; v += step) {
+            const x = toX(v);
+            ctx.beginPath();
+            ctx.moveTo(x, padT - 4);
+            ctx.lineTo(x, padT + boots.length * rowH);
+            ctx.stroke();
+            const label = v.toFixed(0);
+            ctx.fillText(label, x - ctx.measureText(label).width / 2, padT + boots.length * rowH + 4);
+        }
+
+        // Draw rows
+        boots.forEach((boot, i) => {
+            const y = padT + i * rowH;
+            const isSelected = boot.MPN === selectedMPN;
+
+            // Row highlight
+            if (isSelected) {
+                ctx.fillStyle = 'rgba(102, 126, 234, 0.15)';
+                ctx.fillRect(0, y, chartW, rowH);
+            } else if (i % 2 === 0) {
+                ctx.fillStyle = 'rgba(0,0,0,0.02)';
+                ctx.fillRect(0, y, chartW, rowH);
+            }
+
+            // Label
+            ctx.font = isSelected ? 'bold 10px Courier New, monospace' : '10px Courier New, monospace';
+            ctx.fillStyle = isSelected ? '#2c3e50' : '#718096';
+            ctx.textBaseline = 'middle';
+            ctx.textAlign = 'left';
+            ctx.fillText(boot.MPN, 4, y + rowH / 2);
+
+            // Bar
+            const x1 = toX(boot[minKey]);
+            const x2 = toX(boot[maxKey]);
+            const barH = 14;
+            const barY = y + (rowH - barH) / 2;
+
+            // Bar color based on fit
+            let barColor, borderColor;
+            if (actualValue !== null) {
+                if (actualValue > boot[maxKey]) {
+                    barColor = isSelected ? '#fc8181' : '#fed7d7';
+                    borderColor = isSelected ? '#c53030' : '#feb2b2';
+                } else if (actualValue < boot[minKey]) {
+                    barColor = isSelected ? '#fbd38d' : '#fefcbf';
+                    borderColor = isSelected ? '#b7791f' : '#f6e05e';
+                } else {
+                    barColor = isSelected ? '#9ae6b4' : '#c6f6d5';
+                    borderColor = isSelected ? '#2f855a' : '#9ae6b4';
+                }
+            } else {
+                barColor = isSelected ? '#bee3f8' : '#e2e8f0';
+                borderColor = isSelected ? '#3182ce' : '#cbd5e0';
+            }
+
+            // Min range (dashed, lighter)
+            ctx.fillStyle = barColor;
+            ctx.fillRect(x1, barY, x2 - x1, barH);
+            ctx.strokeStyle = borderColor;
+            ctx.lineWidth = isSelected ? 1.5 : 1;
+            ctx.strokeRect(x1, barY, x2 - x1, barH);
+
+            // Min value tick
+            ctx.strokeStyle = borderColor;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(x1, barY);
+            ctx.lineTo(x1, barY + barH);
+            ctx.stroke();
+
+            // Max value tick
+            ctx.beginPath();
+            ctx.moveTo(x2, barY);
+            ctx.lineTo(x2, barY + barH);
+            ctx.stroke();
+        });
+
+        // Actual value line
+        if (actualValue !== null) {
+            const ax = toX(actualValue);
+            ctx.strokeStyle = '#e53e3e';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 3]);
+            ctx.beginPath();
+            ctx.moveTo(ax, padT - 2);
+            ctx.lineTo(ax, padT + boots.length * rowH);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Actual value label
+            ctx.font = 'bold 10px Segoe UI, sans-serif';
+            ctx.fillStyle = '#e53e3e';
+            ctx.textBaseline = 'bottom';
+            ctx.textAlign = 'center';
+            const label = actualValue.toFixed(1) + ' mm';
+            const lw = ctx.measureText(label).width;
+            let lx = ax;
+            if (lx - lw / 2 < barAreaX) lx = barAreaX + lw / 2;
+            if (lx + lw / 2 > chartW - 2) lx = chartW - 2 - lw / 2;
+            ctx.fillText(label, lx, padT - 3);
+        }
+
+        ctx.textAlign = 'left';
+    },
+
+    _niceStep(min, max, targetTicks) {
+        const range = max - min;
+        const rough = range / targetTicks;
+        const mag = Math.pow(10, Math.floor(Math.log10(rough)));
+        const residual = rough / mag;
+        let nice;
+        if (residual <= 1.5) nice = 1;
+        else if (residual <= 3) nice = 2;
+        else if (residual <= 7) nice = 5;
+        else nice = 10;
+        return nice * mag;
     },
 
 };
