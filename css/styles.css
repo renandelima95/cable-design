@@ -832,12 +832,18 @@ input:focus, select:focus {
 
 /* ---- Backshell Warning ---- */
 .backshell-warning {
-    background: #fff3cd;
-    color: #856404;
+    background: #f8d7da;
+    color: #721c24;
     padding: 8px 12px;
     border-radius: 5px;
-    border-left: 3px solid #ffc107;
+    border-left: 3px solid #dc3545;
     font-size: 0.85em;
     font-weight: 500;
     margin-top: 8px;
+}
+
+.backshell-warning-loose {
+    background: #fff3cd;
+    color: #856404;
+    border-left-color: #ffc107;
 }

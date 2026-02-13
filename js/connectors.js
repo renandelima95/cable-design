@@ -122,6 +122,56 @@ const ConnectorUI = {
         return Database.findBootShrink(bootType, backshell.outputExternalDiameter, bundleDiameter);
     },
 
+    getCompatibleBootShrinks(nodeName) {
+        const config = AppState.endNodeConfigs[nodeName];
+        if (!config) return [];
+        const bootType = config.bootShrinkType || 'straight';
+        return Database.getCompatibleBootShrinks(bootType);
+    },
+
+    getSelectedBootShrink(nodeName) {
+        const config = AppState.endNodeConfigs[nodeName];
+        if (!config) return null;
+
+        if (config.bootShrinkOverrideMPN) {
+            const bootShrink = Database.bootShrinks.find(bs => bs.MPN === config.bootShrinkOverrideMPN);
+            if (bootShrink) return bootShrink;
+        }
+
+        return this.getBootShrinkSuggestion(nodeName);
+    },
+
+    getBootShrinkWarnings(nodeName) {
+        const config = AppState.endNodeConfigs[nodeName];
+        if (!config) return [];
+
+        const bootShrink = this.getSelectedBootShrink(nodeName);
+        if (!bootShrink) return [];
+
+        const backshell = this.getSelectedBackshell(nodeName);
+        const bundleDiameter = this.getBundleDiameterAtNode(nodeName);
+        const warnings = [];
+
+        if (backshell) {
+            const bsOD = backshell.outputExternalDiameter;
+            if (bsOD > bootShrink.maxBackshellDiameter) {
+                warnings.push({ type: 'error', msg: `Backshell OD (${bsOD.toFixed(1)} mm) excede máx. do boot (${bootShrink.maxBackshellDiameter} mm)` });
+            } else if (bsOD < bootShrink.minBackshellDiameter) {
+                warnings.push({ type: 'warn', msg: `Backshell OD (${bsOD.toFixed(1)} mm) abaixo do mín. ideal (${bootShrink.minBackshellDiameter} mm) \u2014 folga excessiva` });
+            }
+        }
+
+        if (bundleDiameter > 0) {
+            if (bundleDiameter > bootShrink.maxBundleDiameter) {
+                warnings.push({ type: 'error', msg: `Bundle (${bundleDiameter.toFixed(2)} mm) excede máx. do boot (${bootShrink.maxBundleDiameter} mm)` });
+            } else if (bundleDiameter < bootShrink.minBundleDiameter) {
+                warnings.push({ type: 'warn', msg: `Bundle (${bundleDiameter.toFixed(2)} mm) abaixo do mín. ideal (${bootShrink.minBundleDiameter} mm) \u2014 folga excessiva` });
+            }
+        }
+
+        return warnings;
+    },
+
     formatInsertArrLabel(arr) {
         const pinParts = Object.entries(arr.pins).map(([gauge, count]) => `${count}\u00D7#${gauge}`);
         return `${arr.code} \u2014 ${arr.total} contacts (${pinParts.join(' + ')})`;
@@ -156,7 +206,10 @@ const ConnectorUI = {
             const selectedBackshell = this.getSelectedBackshell(node.name);
             const suggestedBackshell = this.getBackshellSuggestion(node.name);
             const compatibleBackshells = this.getCompatibleBackshells(node.name);
-            const bootShrinkSuggestion = this.getBootShrinkSuggestion(node.name);
+            const selectedBootShrink = this.getSelectedBootShrink(node.name);
+            const suggestedBootShrink = this.getBootShrinkSuggestion(node.name);
+            const compatibleBootShrinks = this.getCompatibleBootShrinks(node.name);
+            const bootShrinkWarnings = this.getBootShrinkWarnings(node.name);
 
             const isUndersized = selectedBackshell && bundleDiameter > 0 &&
                 bundleDiameter > selectedBackshell.maxBundleDiameter;
@@ -329,8 +382,15 @@ const ConnectorUI = {
                     </div>
 
                     <div class="suggestion-box" style="margin-top: 10px;">
-                        <div class="suggestion-box-title">Boot Shrink Suggestion</div>
-                        ${this.renderSuggestion(bootShrinkSuggestion)}
+                        <div class="suggestion-box-title">Boot Shrink</div>
+                        <div class="input-row" style="margin-bottom: 8px;">
+                            <select onchange="ConnectorUI.onBootShrinkChange('${esc(node.name)}', this.value)"
+                                    ${compatibleBootShrinks.length === 0 ? 'disabled' : ''}>
+                                ${this.buildBootShrinkOptions(compatibleBootShrinks, config, suggestedBootShrink)}
+                            </select>
+                        </div>
+                        ${this.renderSuggestion(selectedBootShrink)}
+                        ${bootShrinkWarnings.map(w => `<div class="backshell-warning${w.type === 'warn' ? ' backshell-warning-loose' : ''}">${w.msg}</div>`).join('')}
                     </div>
                 </div>`;
         });
@@ -359,18 +419,42 @@ const ConnectorUI = {
             </div>`;
     },
 
+    buildBootShrinkOptions(compatibleBootShrinks, config, suggestedBootShrink) {
+        const esc = CanvasEditor.escapeHtml.bind(CanvasEditor);
+        let options = '<option value="">Auto (sugestão)</option>';
+        const currentMPN = config.bootShrinkOverrideMPN || (suggestedBootShrink ? suggestedBootShrink.MPN : '');
+        compatibleBootShrinks.forEach(bs => {
+            const isSuggested = suggestedBootShrink && bs.MPN === suggestedBootShrink.MPN;
+            const selected = bs.MPN === currentMPN ? 'selected' : '';
+            const label = `${esc(bs.MPN)} \u2014 BS \u2264${bs.maxBackshellDiameter} / Bundle \u2264${bs.maxBundleDiameter} mm${isSuggested ? ' (sugerido)' : ''}`;
+            options += `<option value="${bs.MPN}" ${selected}>${label}</option>`;
+        });
+        return options;
+    },
+
+    onBootShrinkChange(nodeName, value) {
+        if (!AppState.endNodeConfigs[nodeName]) return;
+        AppState.endNodeConfigs[nodeName].bootShrinkOverrideMPN = value || null;
+        this.render();
+        BomUI.markDirty();
+    },
+
     onFieldChange(nodeName, field, value) {
         if (!AppState.endNodeConfigs[nodeName]) {
             AppState.endNodeConfigs[nodeName] = {
                 series: null, coating: null, shellSize: null, insertArr: null,
                 contactType: null, polarity: null,
                 backshellAngle: 'straight', bootShrinkType: 'straight',
-                backshellOverrideMPN: null
+                backshellOverrideMPN: null, bootShrinkOverrideMPN: null
             };
         }
         AppState.endNodeConfigs[nodeName][field] = value || null;
         if (field === 'backshellAngle') {
             AppState.endNodeConfigs[nodeName].backshellOverrideMPN = null;
+            AppState.endNodeConfigs[nodeName].bootShrinkOverrideMPN = null;
+        }
+        if (field === 'bootShrinkType') {
+            AppState.endNodeConfigs[nodeName].bootShrinkOverrideMPN = null;
         }
         this.render();
         BomUI.markDirty();
@@ -382,12 +466,13 @@ const ConnectorUI = {
                 series: null, coating: null, shellSize: null, insertArr: null,
                 contactType: null, polarity: null,
                 backshellAngle: 'straight', bootShrinkType: 'straight',
-                backshellOverrideMPN: null
+                backshellOverrideMPN: null, bootShrinkOverrideMPN: null
             };
         }
         AppState.endNodeConfigs[nodeName].shellSize = value || null;
         AppState.endNodeConfigs[nodeName].insertArr = null;
         AppState.endNodeConfigs[nodeName].backshellOverrideMPN = null;
+        AppState.endNodeConfigs[nodeName].bootShrinkOverrideMPN = null;
         this.render();
         BomUI.markDirty();
     },
@@ -395,6 +480,7 @@ const ConnectorUI = {
     onBackshellChange(nodeName, value) {
         if (!AppState.endNodeConfigs[nodeName]) return;
         AppState.endNodeConfigs[nodeName].backshellOverrideMPN = value || null;
+        AppState.endNodeConfigs[nodeName].bootShrinkOverrideMPN = null;
         this.render();
         BomUI.markDirty();
     }
