@@ -97,9 +97,9 @@ const CanvasEditor = {
                 });
                 if (nodeType === 'end') {
                     AppState.endNodeConfigs[sanitizedName] = {
-                        connector: null,
-                        backshellAngle: 'straight',
-                        bootShrinkType: 'straight'
+                        series: null, coating: null, shellSize: null, insertArr: null,
+                        contactType: null, polarity: null,
+                        backshellAngle: 'straight', bootShrinkType: 'straight'
                     };
                 }
                 App.updateNodeSelects();

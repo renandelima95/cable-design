@@ -46,10 +46,15 @@ const BomUI = {
         const endNodes = AppState.nodes.filter(n => n.nodeType === 'end');
         endNodes.forEach(node => {
             const config = AppState.endNodeConfigs[node.name];
-            if (!config || !config.connector) return;
-            const connector = Database.findConnector(config.connector);
-            if (connector) {
-                addItem(connector.PN, connector.description, connector.UOM || 'un', 1, connector.MPN, 1);
+            if (!config) return;
+            const mpn = ConnectorUI.buildMPN(config);
+            if (!mpn) return;
+            const matched = ConnectorUI.findMatchingConnector(mpn);
+            if (matched) {
+                addItem(matched.PN, matched.description, matched.UOM || 'un', 1, mpn, 1);
+            } else {
+                const desc = ConnectorUI.buildDescription(config);
+                addItem('', desc, 'un', 1, mpn, 1);
             }
         });
 
