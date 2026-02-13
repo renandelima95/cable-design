@@ -24,7 +24,7 @@
                 </div>
                 <div class="input-row">
                     <label for="editQuantity">Quantidade de Vias</label>
-                    <input type="number" id="editQuantity" min="1" value="1">
+                    <input type="number" id="editQuantity" min="1" max="75" value="1">
                 </div>
                 <div class="input-row-2col">
                     <div>
@@ -124,7 +124,7 @@
 
                             <div class="input-row">
                                 <label for="quantity">Quantidade de Vias</label>
-                                <input type="number" id="quantity" placeholder="1" min="1" value="1" step="1">
+                                <input type="number" id="quantity" placeholder="1" min="1" max="75" value="1" step="1">
                             </div>
 
                             <div class="input-row-2col">
@@ -202,7 +202,10 @@
 
         <!-- SECTION 6: BILL OF MATERIALS -->
         <div class="section">
-            <div class="section-header">Bill of Materials</div>
+            <div class="section-header bom-header">
+                <span>Bill of Materials</span>
+                <button id="refreshBomBtn" class="btn-refresh-bom" onclick="BomUI.update()">Atualizar BOM</button>
+            </div>
             <div class="section-content">
                 <div id="bomContainer">
                     <div class="empty-state">

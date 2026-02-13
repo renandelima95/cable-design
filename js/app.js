@@ -237,6 +237,10 @@ const App = {
             alert('Por favor, insira uma quantidade válida');
             return;
         }
+        if (quantity > 75) {
+            alert('Quantidade máxima de vias por rota é 75');
+            return;
+        }
         if (!origin || !destination) {
             alert('Por favor, selecione origem e destino');
             return;
@@ -446,6 +450,10 @@ const App = {
 
         if (!cableType || !quantity || !origin || !destination) {
             alert('Preencha todos os campos!');
+            return;
+        }
+        if (quantity > 75) {
+            alert('Quantidade máxima de vias por rota é 75');
             return;
         }
         if (origin === destination) {

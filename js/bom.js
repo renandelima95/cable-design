@@ -5,7 +5,24 @@
 
 const BomUI = {
 
+    markDirty() {
+        const btn = document.getElementById('refreshBomBtn');
+        if (btn) {
+            btn.classList.add('dirty');
+            btn.textContent = 'Atualizar BOM *';
+        }
+    },
+
+    markClean() {
+        const btn = document.getElementById('refreshBomBtn');
+        if (btn) {
+            btn.classList.remove('dirty');
+            btn.textContent = 'Atualizar BOM';
+        }
+    },
+
     update() {
+        this.markClean();
         const container = document.getElementById('bomContainer');
         if (!container) return;
 
@@ -60,7 +77,7 @@ const BomUI = {
 
         // 2. Backshells (category 2)
         endNodes.forEach(node => {
-            const backshell = ConnectorUI.getBackshellSuggestion(node.name);
+            const backshell = ConnectorUI.getSelectedBackshell(node.name);
             if (backshell) {
                 addItem(backshell.PN, backshell.description, backshell.UOM || 'un', 1, backshell.MPN, 2);
             }
