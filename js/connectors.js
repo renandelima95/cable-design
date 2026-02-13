@@ -6,6 +6,13 @@
 
 const ConnectorUI = {
 
+    selectedNode: null,
+
+    selectNode(nodeName) {
+        this.selectedNode = nodeName;
+        this.render();
+    },
+
     getEndNodes() {
         return AppState.nodes.filter(n => n.nodeType === 'end');
     },
@@ -188,237 +195,173 @@ const ConnectorUI = {
             return;
         }
 
+        if (!this.selectedNode || !endNodes.find(n => n.name === this.selectedNode)) {
+            this.selectedNode = endNodes[0].name;
+        }
+
         const esc = CanvasEditor.escapeHtml.bind(CanvasEditor);
         const cfg = Database.d38999Config;
-        let html = '<div class="connector-config-grid">';
 
+        // Tab bar
+        let html = '<div class="connector-tabs">';
         endNodes.forEach(node => {
-            const config = AppState.endNodeConfigs[node.name] || {};
-            const nodePrefix = this.getNodePrefix(node.name);
-            const bundleDiameter = this.getBundleDiameterAtNode(node.name);
+            const active = node.name === this.selectedNode ? 'active' : '';
+            const prefix = this.getNodePrefix(node.name);
+            html += `<button class="connector-tab ${active}" onclick="ConnectorUI.selectNode('${esc(node.name)}')">${esc(node.name)} <span class="tab-type">${prefix === 'P' ? 'Plug' : 'Rcpt'}</span></button>`;
+        });
+        html += '</div>';
 
-            const availableSeries = cfg.series.filter(s => s.nodePrefix === nodePrefix);
-            const arrangements = config.shellSize ? (cfg.insertArrangements[config.shellSize] || []) : [];
+        // Render selected node only
+        const node = endNodes.find(n => n.name === this.selectedNode);
+        const config = AppState.endNodeConfigs[node.name] || {};
+        const nodePrefix = this.getNodePrefix(node.name);
+        const bundleDiameter = this.getBundleDiameterAtNode(node.name);
 
-            const mpn = this.buildMPN(config);
-            const matchedConnector = this.findMatchingConnector(mpn);
+        const availableSeries = cfg.series.filter(s => s.nodePrefix === nodePrefix);
+        const arrangements = config.shellSize ? (cfg.insertArrangements[config.shellSize] || []) : [];
 
-            const selectedBackshell = this.getSelectedBackshell(node.name);
-            const suggestedBackshell = this.getBackshellSuggestion(node.name);
-            const compatibleBackshells = this.getCompatibleBackshells(node.name);
-            const selectedBootShrink = this.getSelectedBootShrink(node.name);
-            const suggestedBootShrink = this.getBootShrinkSuggestion(node.name);
-            const compatibleBootShrinks = this.getCompatibleBootShrinks(node.name);
-            const bootShrinkWarnings = this.getBootShrinkWarnings(node.name);
+        const mpn = this.buildMPN(config);
+        const matchedConnector = this.findMatchingConnector(mpn);
 
-            const isUndersized = selectedBackshell && bundleDiameter > 0 &&
-                bundleDiameter > selectedBackshell.maxBundleDiameter;
+        const selectedBackshell = this.getSelectedBackshell(node.name);
+        const suggestedBackshell = this.getBackshellSuggestion(node.name);
+        const compatibleBackshells = this.getCompatibleBackshells(node.name);
+        const selectedBootShrink = this.getSelectedBootShrink(node.name);
+        const suggestedBootShrink = this.getBootShrinkSuggestion(node.name);
+        const compatibleBootShrinks = this.getCompatibleBootShrinks(node.name);
+        const bootShrinkWarnings = this.getBootShrinkWarnings(node.name);
 
-            // --- Series dropdown ---
-            let seriesOptions = '<option value="">Selecione...</option>';
-            availableSeries.forEach(s => {
-                const selected = config.series === s.code ? 'selected' : '';
-                seriesOptions += `<option value="${s.code}" ${selected}>${s.code} - ${esc(s.name)}</option>`;
-            });
+        const isUndersized = selectedBackshell && bundleDiameter > 0 &&
+            bundleDiameter > selectedBackshell.maxBundleDiameter;
 
-            // --- Coating dropdown ---
-            let coatingOptions = '<option value="">Selecione...</option>';
-            cfg.coatings.forEach(c => {
-                const selected = config.coating === c.code ? 'selected' : '';
-                coatingOptions += `<option value="${c.code}" ${selected}>${c.code} - ${esc(c.name)}</option>`;
-            });
-
-            // --- Shell Size dropdown ---
-            let shellSizeOptions = '<option value="">Selecione...</option>';
-            cfg.shellSizes.forEach(s => {
-                const selected = config.shellSize === s.letter ? 'selected' : '';
-                shellSizeOptions += `<option value="${s.letter}" ${selected}>${s.letter} (Shell ${s.number})</option>`;
-            });
-
-            // --- Insert Arrangement dropdown ---
-            let insertArrOptions = '<option value="">Selecione...</option>';
-            arrangements.forEach(a => {
-                const selected = config.insertArr === a.code ? 'selected' : '';
-                insertArrOptions += `<option value="${a.code}" ${selected}>${esc(this.formatInsertArrLabel(a))}</option>`;
-            });
-
-            // --- Contact Type dropdown ---
-            let contactTypeOptions = '<option value="">Selecione...</option>';
-            cfg.contactTypes.forEach(ct => {
-                const selected = config.contactType === ct.code ? 'selected' : '';
-                contactTypeOptions += `<option value="${ct.code}" ${selected}>${ct.code} - ${esc(ct.name)}</option>`;
-            });
-
-            // --- Polarity dropdown ---
-            let polarityOptions = '<option value="">Selecione...</option>';
-            cfg.polarities.forEach(p => {
-                const selected = config.polarity === p.code ? 'selected' : '';
-                polarityOptions += `<option value="${p.code}" ${selected}>${p.code} - ${esc(p.name)}</option>`;
-            });
-
-            // --- Backshell dropdown ---
-            let backshellOptions = '<option value="">Auto (sugestão)</option>';
-            const currentBackshellMPN = config.backshellOverrideMPN || (suggestedBackshell ? suggestedBackshell.MPN : '');
-            compatibleBackshells.forEach(bs => {
-                const isSuggested = suggestedBackshell && bs.MPN === suggestedBackshell.MPN;
-                const selected = bs.MPN === currentBackshellMPN ? 'selected' : '';
-                const label = `${esc(bs.MPN)} \u2014 Cable entry \u2264 ${bs.maxBundleDiameter} mm${isSuggested ? ' (sugerido)' : ''}`;
-                backshellOptions += `<option value="${bs.MPN}" ${selected}>${label}</option>`;
-            });
-
-            let backshellWarningHtml = '';
-            if (isUndersized) {
-                backshellWarningHtml = `<div class="backshell-warning">Bundle (${bundleDiameter.toFixed(2)} mm) excede cable entry máx. (${selectedBackshell.maxBundleDiameter} mm)</div>`;
-            }
-
-            // --- MPN display ---
-            let mpnHtml;
-            if (mpn) {
-                mpnHtml = `<span class="mpn-code">${esc(mpn)}</span>`;
-                if (matchedConnector) {
-                    mpnHtml += `<div class="mpn-match">
-                        <span class="label">PN:</span> <span class="value">${esc(matchedConnector.PN || '\u2014')}</span>
-                        <span class="label" style="margin-left:12px;">Description:</span> <span class="value">${esc(matchedConnector.description || '\u2014')}</span>
-                    </div>`;
-                } else {
-                    mpnHtml += '<div class="mpn-no-match">MPN not found in database</div>';
-                }
-            } else {
-                mpnHtml = '<span class="mpn-placeholder">Complete all fields to build MPN</span>';
-            }
-
-            html += `
-                <div class="connector-card">
-                    <div class="connector-card-header">
-                        <span class="connector-card-title">${esc(node.name)}</span>
-                        <span class="node-type-badge end-node">${nodePrefix === 'P' ? 'Plug' : 'Receptacle'}</span>
-                    </div>
-
-                    <div class="input-row">
-                        <label>Bundle Diameter</label>
-                        <input type="text" value="${bundleDiameter > 0 ? bundleDiameter.toFixed(2) + ' mm' : 'No routes'}" disabled>
-                    </div>
-
-                    <div class="mpn-builder">
-                        <div class="mpn-builder-title">D38999 MPN Builder</div>
-
-                        <div class="input-row-3col">
-                            <div>
-                                <label>Series</label>
-                                <select onchange="ConnectorUI.onFieldChange('${esc(node.name)}', 'series', this.value)">
-                                    ${seriesOptions}
-                                </select>
-                            </div>
-                            <div>
-                                <label>Coating</label>
-                                <select onchange="ConnectorUI.onFieldChange('${esc(node.name)}', 'coating', this.value)">
-                                    ${coatingOptions}
-                                </select>
-                            </div>
-                            <div>
-                                <label>Shell Size</label>
-                                <select onchange="ConnectorUI.onShellSizeChange('${esc(node.name)}', this.value)">
-                                    ${shellSizeOptions}
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="input-row">
-                            <label>Insert Arrangement</label>
-                            <select onchange="ConnectorUI.onFieldChange('${esc(node.name)}', 'insertArr', this.value)"
-                                    ${!config.shellSize ? 'disabled' : ''}>
-                                ${insertArrOptions}
-                            </select>
-                        </div>
-
-                        <div class="input-row-2col">
-                            <div>
-                                <label>Contact Type</label>
-                                <select onchange="ConnectorUI.onFieldChange('${esc(node.name)}', 'contactType', this.value)">
-                                    ${contactTypeOptions}
-                                </select>
-                            </div>
-                            <div>
-                                <label>Polarity</label>
-                                <select onchange="ConnectorUI.onFieldChange('${esc(node.name)}', 'polarity', this.value)">
-                                    ${polarityOptions}
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="mpn-display">
-                            <div class="mpn-display-title">MPN</div>
-                            ${mpnHtml}
-                        </div>
-                    </div>
-
-                    <div class="input-row-2col" style="margin-top: 15px;">
-                        <div>
-                            <label>Backshell Angle</label>
-                            <select onchange="ConnectorUI.onFieldChange('${esc(node.name)}', 'backshellAngle', this.value)">
-                                <option value="straight" ${config.backshellAngle === 'straight' ? 'selected' : ''}>Straight</option>
-                                <option value="90-deg" ${config.backshellAngle === '90-deg' ? 'selected' : ''}>90\u00B0</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label>Boot Shrink Type</label>
-                            <select onchange="ConnectorUI.onFieldChange('${esc(node.name)}', 'bootShrinkType', this.value)">
-                                <option value="straight" ${config.bootShrinkType === 'straight' ? 'selected' : ''}>Straight</option>
-                                <option value="90-deg" ${config.bootShrinkType === '90-deg' ? 'selected' : ''}>90\u00B0</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="suggestion-box">
-                        <div class="suggestion-box-title">Backshell</div>
-                        <div class="input-row" style="margin-bottom: 8px;">
-                            <select onchange="ConnectorUI.onBackshellChange('${esc(node.name)}', this.value)"
-                                    ${compatibleBackshells.length === 0 ? 'disabled' : ''}>
-                                ${backshellOptions}
-                            </select>
-                        </div>
-                        ${this.renderSuggestion(selectedBackshell)}
-                        ${backshellWarningHtml}
-                    </div>
-
-                    <div class="suggestion-box" style="margin-top: 10px;">
-                        <div class="suggestion-box-title">Boot Shrink</div>
-                        <div class="input-row" style="margin-bottom: 8px;">
-                            <select onchange="ConnectorUI.onBootShrinkChange('${esc(node.name)}', this.value)"
-                                    ${compatibleBootShrinks.length === 0 ? 'disabled' : ''}>
-                                ${this.buildBootShrinkOptions(compatibleBootShrinks, config, suggestedBootShrink)}
-                            </select>
-                        </div>
-                        ${this.renderSuggestion(selectedBootShrink)}
-                        ${bootShrinkWarnings.map(w => `<div class="backshell-warning${w.type === 'warn' ? ' backshell-warning-loose' : ''}">${w.msg}</div>`).join('')}
-                    </div>
-
-                    ${this.renderRamificationInfo(node.name, selectedBackshell, selectedBootShrink, bundleDiameter)}
-                </div>`;
+        // --- Build dropdown options ---
+        let seriesOptions = '<option value="">Selecione...</option>';
+        availableSeries.forEach(s => {
+            const selected = config.series === s.code ? 'selected' : '';
+            seriesOptions += `<option value="${s.code}" ${selected}>${s.code} - ${esc(s.name)}</option>`;
         });
 
-        html += '</div>';
+        let coatingOptions = '<option value="">Selecione...</option>';
+        cfg.coatings.forEach(c => {
+            const selected = config.coating === c.code ? 'selected' : '';
+            coatingOptions += `<option value="${c.code}" ${selected}>${c.code} - ${esc(c.name)}</option>`;
+        });
+
+        let shellSizeOptions = '<option value="">Selecione...</option>';
+        cfg.shellSizes.forEach(s => {
+            const selected = config.shellSize === s.letter ? 'selected' : '';
+            shellSizeOptions += `<option value="${s.letter}" ${selected}>${s.letter} (Shell ${s.number})</option>`;
+        });
+
+        let insertArrOptions = '<option value="">Selecione...</option>';
+        arrangements.forEach(a => {
+            const selected = config.insertArr === a.code ? 'selected' : '';
+            insertArrOptions += `<option value="${a.code}" ${selected}>${esc(this.formatInsertArrLabel(a))}</option>`;
+        });
+
+        let contactTypeOptions = '<option value="">Selecione...</option>';
+        cfg.contactTypes.forEach(ct => {
+            const selected = config.contactType === ct.code ? 'selected' : '';
+            contactTypeOptions += `<option value="${ct.code}" ${selected}>${ct.code} - ${esc(ct.name)}</option>`;
+        });
+
+        let polarityOptions = '<option value="">Selecione...</option>';
+        cfg.polarities.forEach(p => {
+            const selected = config.polarity === p.code ? 'selected' : '';
+            polarityOptions += `<option value="${p.code}" ${selected}>${p.code} - ${esc(p.name)}</option>`;
+        });
+
+        let backshellOptions = '<option value="">Auto (sugest\u00E3o)</option>';
+        const currentBackshellMPN = config.backshellOverrideMPN || (suggestedBackshell ? suggestedBackshell.MPN : '');
+        compatibleBackshells.forEach(bs => {
+            const isSuggested = suggestedBackshell && bs.MPN === suggestedBackshell.MPN;
+            const selected = bs.MPN === currentBackshellMPN ? 'selected' : '';
+            const label = `${esc(bs.MPN)} \u2014 Cable entry \u2264 ${bs.maxBundleDiameter} mm${isSuggested ? ' (sugerido)' : ''}`;
+            backshellOptions += `<option value="${bs.MPN}" ${selected}>${label}</option>`;
+        });
+
+        let backshellWarningHtml = '';
+        if (isUndersized) {
+            backshellWarningHtml = `<div class="backshell-warning">Bundle (${bundleDiameter.toFixed(2)} mm) excede cable entry m\u00E1x. (${selectedBackshell.maxBundleDiameter} mm)</div>`;
+        }
+
+        // --- MPN display ---
+        let mpnHtml;
+        if (mpn) {
+            mpnHtml = `<span class="mpn-code">${esc(mpn)}</span>`;
+            if (matchedConnector) {
+                mpnHtml += `<span class="mpn-inline-info"><span class="label">PN:</span> ${esc(matchedConnector.PN || '\u2014')} <span class="label">Desc:</span> ${esc(matchedConnector.description || '\u2014')}</span>`;
+            } else {
+                mpnHtml += ' <span class="mpn-no-match">Not in database</span>';
+            }
+        } else {
+            mpnHtml = '<span class="mpn-placeholder">Complete all fields to build MPN</span>';
+        }
+
+        // --- Compact layout ---
+        const nn = esc(node.name);
+
+        html += `<div class="cc-panel">
+            <div class="cc-row cc-bundle-bar">
+                <span>Bundle \u00D8: <strong>${bundleDiameter > 0 ? bundleDiameter.toFixed(2) + ' mm' : 'No routes'}</strong></span>
+            </div>
+
+            <div class="cc-section">
+                <div class="cc-section-title">D38999 MPN Builder</div>
+                <div class="cc-grid-3">
+                    <div><label>Series</label><select onchange="ConnectorUI.onFieldChange('${nn}','series',this.value)">${seriesOptions}</select></div>
+                    <div><label>Coating</label><select onchange="ConnectorUI.onFieldChange('${nn}','coating',this.value)">${coatingOptions}</select></div>
+                    <div><label>Shell Size</label><select onchange="ConnectorUI.onShellSizeChange('${nn}',this.value)">${shellSizeOptions}</select></div>
+                    <div><label>Insert Arrangement</label><select onchange="ConnectorUI.onFieldChange('${nn}','insertArr',this.value)" ${!config.shellSize ? 'disabled' : ''}>${insertArrOptions}</select></div>
+                    <div><label>Contact Type</label><select onchange="ConnectorUI.onFieldChange('${nn}','contactType',this.value)">${contactTypeOptions}</select></div>
+                    <div><label>Polarity</label><select onchange="ConnectorUI.onFieldChange('${nn}','polarity',this.value)">${polarityOptions}</select></div>
+                </div>
+                <div class="cc-mpn-result">${mpnHtml}</div>
+            </div>
+
+            <div class="cc-accessories">
+                <div class="cc-accessory">
+                    <div class="cc-section-title">Backshell</div>
+                    <div class="cc-grid-2">
+                        <div><label>Angle</label><select onchange="ConnectorUI.onFieldChange('${nn}','backshellAngle',this.value)">
+                            <option value="straight" ${config.backshellAngle === 'straight' ? 'selected' : ''}>Straight</option>
+                            <option value="90-deg" ${config.backshellAngle === '90-deg' ? 'selected' : ''}>90\u00B0</option>
+                        </select></div>
+                        <div><label>Override</label><select onchange="ConnectorUI.onBackshellChange('${nn}',this.value)" ${compatibleBackshells.length === 0 ? 'disabled' : ''}>${backshellOptions}</select></div>
+                    </div>
+                    ${this.renderSuggestion(selectedBackshell)}
+                    ${backshellWarningHtml}
+                </div>
+                <div class="cc-accessory">
+                    <div class="cc-section-title">Boot Shrink</div>
+                    <div class="cc-grid-2">
+                        <div><label>Type</label><select onchange="ConnectorUI.onFieldChange('${nn}','bootShrinkType',this.value)">
+                            <option value="straight" ${config.bootShrinkType === 'straight' ? 'selected' : ''}>Straight</option>
+                            <option value="90-deg" ${config.bootShrinkType === '90-deg' ? 'selected' : ''}>90\u00B0</option>
+                        </select></div>
+                        <div><label>Override</label><select onchange="ConnectorUI.onBootShrinkChange('${nn}',this.value)" ${compatibleBootShrinks.length === 0 ? 'disabled' : ''}>${this.buildBootShrinkOptions(compatibleBootShrinks, config, suggestedBootShrink)}</select></div>
+                    </div>
+                    ${this.renderSuggestion(selectedBootShrink)}
+                    ${bootShrinkWarnings.map(w => `<div class="backshell-warning${w.type === 'warn' ? ' backshell-warning-loose' : ''}">${w.msg}</div>`).join('')}
+                </div>
+            </div>
+
+            ${this.renderRamificationInfo(node.name, selectedBackshell, selectedBootShrink, bundleDiameter)}
+        </div>`;
+
         container.innerHTML = html;
     },
 
     renderSuggestion(item) {
         if (!item) {
-            return '<div class="suggestion-item"><span class="label">No suggestion available</span></div>';
+            return '<div class="cc-suggestion-line"><span class="label">No suggestion available</span></div>';
         }
         const esc = CanvasEditor.escapeHtml.bind(CanvasEditor);
-        return `
-            <div class="suggestion-item">
-                <span class="label">PN:</span>
-                <span class="value">${esc(item.PN || '\u2014')}</span>
-            </div>
-            <div class="suggestion-item">
-                <span class="label">MPN:</span>
-                <span class="value">${esc(item.MPN || '\u2014')}</span>
-            </div>
-            <div class="suggestion-item">
-                <span class="label">Description:</span>
-                <span class="value">${esc(item.description || '\u2014')}</span>
-            </div>`;
+        return `<div class="cc-suggestion-line">
+            <span><span class="label">PN:</span> ${esc(item.PN || '\u2014')}</span>
+            <span><span class="label">MPN:</span> ${esc(item.MPN || '\u2014')}</span>
+            <span><span class="label">Desc:</span> ${esc(item.description || '\u2014')}</span>
+        </div>`;
     },
 
     buildBootShrinkOptions(compatibleBootShrinks, config, suggestedBootShrink) {
@@ -501,7 +444,6 @@ const ConnectorUI = {
 
         const fmt = (v) => v !== null && v !== undefined ? v.toFixed(1) : '\u2014';
 
-        // Fit status for BS side
         let bsFit = '';
         if (bsOD !== null && bootBSMax !== null) {
             if (bsOD > bootBSMax) bsFit = 'fit-error';
@@ -509,7 +451,6 @@ const ConnectorUI = {
             else bsFit = 'fit-ok';
         }
 
-        // Fit status for wiring side
         let wireFit = '';
         if (bundle !== null && bootWireMax !== null) {
             if (bundle > bootWireMax) wireFit = 'fit-error';
@@ -518,38 +459,30 @@ const ConnectorUI = {
         }
 
         return `
-            <div class="ramification-info">
-                <div class="ramification-title">Ramification Detail</div>
-                <div class="ramification-group">
-                    <div class="ramification-group-title">Backshell Side</div>
-                    <div class="ramification-row ${bsFit}">
-                        <span class="ramification-label">Backshell Ext. \u00D8</span>
-                        <span class="ramification-value">${fmt(bsOD)} mm</span>
-                    </div>
-                    <div class="ramification-row">
-                        <span class="ramification-label">Boot - BS Side - As Supplied</span>
-                        <span class="ramification-value">${fmt(bootBSMax)} mm</span>
-                    </div>
-                    <div class="ramification-row">
-                        <span class="ramification-label">Boot - BS Side - After Shrinking</span>
-                        <span class="ramification-value">${fmt(bootBSMin)} mm</span>
-                    </div>
-                </div>
-                <div class="ramification-group">
-                    <div class="ramification-group-title">Bundle Side</div>
-                    <div class="ramification-row ${wireFit}">
-                        <span class="ramification-label">Wiring Bundle \u00D8</span>
-                        <span class="ramification-value">${fmt(bundle)} mm</span>
-                    </div>
-                    <div class="ramification-row">
-                        <span class="ramification-label">Boot - Bundle Side - As Supplied</span>
-                        <span class="ramification-value">${fmt(bootWireMax)} mm</span>
-                    </div>
-                    <div class="ramification-row">
-                        <span class="ramification-label">Boot - Bundle Side - After Shrinking</span>
-                        <span class="ramification-value">${fmt(bootWireMin)} mm</span>
-                    </div>
-                </div>
+            <div class="cc-ramification">
+                <div class="cc-section-title">Ramification Detail</div>
+                <table class="cc-ramif-table">
+                    <thead><tr>
+                        <th></th>
+                        <th>Actual \u00D8</th>
+                        <th>Boot - As Supplied</th>
+                        <th>Boot - After Shrinking</th>
+                    </tr></thead>
+                    <tbody>
+                        <tr class="${bsFit}">
+                            <td class="cc-ramif-side">BS Side</td>
+                            <td>${fmt(bsOD)} mm</td>
+                            <td>${fmt(bootBSMax)} mm</td>
+                            <td>${fmt(bootBSMin)} mm</td>
+                        </tr>
+                        <tr class="${wireFit}">
+                            <td class="cc-ramif-side">Bundle Side</td>
+                            <td>${fmt(bundle)} mm</td>
+                            <td>${fmt(bootWireMax)} mm</td>
+                            <td>${fmt(bootWireMin)} mm</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>`;
     },
 
