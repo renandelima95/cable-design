@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cable Design Tool - Component Database</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .db-nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .db-nav a {
+            padding: 8px 16px;
+            background: #34495e;
+            color: white;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.85em;
+            transition: background 0.2s;
+        }
+        .db-nav a:hover {
+            background: #2c3e50;
+        }
+        .db-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 24px;
+            overflow: hidden;
+        }
+        .db-section-header {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 14px 20px;
+            font-weight: 600;
+            font-size: 1.05em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .db-section-header .count {
+            font-weight: 400;
+            font-size: 0.85em;
+            opacity: 0.8;
+        }
+        .db-table-wrap {
+            overflow-x: auto;
+        }
+        .db-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85em;
+        }
+        .db-table th {
+            background: #f8f9fa;
+            padding: 10px 14px;
+            text-align: left;
+            font-weight: 600;
+            color: #2c3e50;
+            border-bottom: 2px solid #dee2e6;
+            white-space: nowrap;
+        }
+        .db-table td {
+            padding: 8px 14px;
+            border-bottom: 1px solid #eee;
+            color: #333;
+        }
+        .db-table tr:hover td {
+            background: #f0f7ff;
+        }
+        .db-table .empty-msg {
+            text-align: center;
+            color: #999;
+            font-style: italic;
+            padding: 20px;
+        }
+        .back-link {
+            color: rgba(255,255,255,0.85);
+            text-decoration: none;
+            font-size: 0.9em;
+        }
+        .back-link:hover {
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-inner">
+            <img src="assets/images/ares_logo.png" alt="ARES Logo" class="header-logo">
+            <div class="header-text">
+                <h1>Component Database</h1>
+                <p>Cable Design Tool - All stored components</p>
+            </div>
+        </div>
+        <div style="text-align:center;">
+            <a href="cable_design.html" class="back-link">&larr; Back to Cable Design Tool</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Quick nav -->
+        <div class="db-nav" id="dbNav"></div>
+
+        <!-- Tables rendered here -->
+        <div id="dbContent"></div>
+    </div>
+
+    <!-- Load database core + all data files -->
+    <script src="js/database.js"></script>
+    <script src="data/cables.js"></script>
+    <script src="data/connectors.js"></script>
+    <script src="data/backshells.js"></script>
+    <script src="data/boot_shrinks.js"></script>
+    <script src="data/braid_tubes.js"></script>
+    <script src="data/tube_shrinks.js"></script>
+    <script src="data/clear_tube_shrinks.js"></script>
+    <script src="data/marker_sleeves.js"></script>
+
+    <script>
+    (function() {
+        const sections = [
+            { key: 'cables',          title: 'Cables' },
+            { key: 'connectors',      title: 'Connectors' },
+            { key: 'backshells',      title: 'Backshells' },
+            { key: 'bootShrinks',     title: 'Boot Shrinks' },
+            { key: 'braidTubes',      title: 'Braid Tubes' },
+            { key: 'tubeShrinks',     title: 'Tube Shrinks' },
+            { key: 'clearTubeShrinks',title: 'Clear Tube Shrinks' },
+            { key: 'markerSleeves',   title: 'Marker Sleeves' },
+        ];
+
+        const nav = document.getElementById('dbNav');
+        const content = document.getElementById('dbContent');
+
+        sections.forEach(function(sec) {
+            const data = Database[sec.key] || [];
+
+            // Nav link
+            const a = document.createElement('a');
+            a.href = '#section-' + sec.key;
+            a.textContent = sec.title + ' (' + data.length + ')';
+            nav.appendChild(a);
+
+            // Section
+            const wrapper = document.createElement('div');
+            wrapper.className = 'db-section';
+            wrapper.id = 'section-' + sec.key;
+
+            const header = document.createElement('div');
+            header.className = 'db-section-header';
+            header.innerHTML = sec.title + ' <span class="count">' + data.length + ' entries</span>';
+            wrapper.appendChild(header);
+
+            const tableWrap = document.createElement('div');
+            tableWrap.className = 'db-table-wrap';
+
+            if (data.length === 0) {
+                tableWrap.innerHTML = '<table class="db-table"><tr><td class="empty-msg">No entries yet — add data in <code>data/' + sec.key + '.js</code></td></tr></table>';
+            } else {
+                // Collect all column keys from the data
+                const cols = [];
+                const seen = {};
+                data.forEach(function(row) {
+                    Object.keys(row).forEach(function(k) {
+                        if (!seen[k]) { seen[k] = true; cols.push(k); }
+                    });
+                });
+
+                var html = '<table class="db-table"><thead><tr>';
+                html += '<th>#</th>';
+                cols.forEach(function(col) {
+                    html += '<th>' + escapeHtml(col) + '</th>';
+                });
+                html += '</tr></thead><tbody>';
+                data.forEach(function(row, i) {
+                    html += '<tr>';
+                    html += '<td>' + (i + 1) + '</td>';
+                    cols.forEach(function(col) {
+                        var val = row[col];
+                        if (val === undefined || val === null) val = '';
+                        html += '<td>' + escapeHtml(String(val)) + '</td>';
+                    });
+                    html += '</tr>';
+                });
+                html += '</tbody></table>';
+                tableWrap.innerHTML = html;
+            }
+
+            wrapper.appendChild(tableWrap);
+            content.appendChild(wrapper);
+        });
+
+        function escapeHtml(str) {
+            return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+    })();
+    </script>
+</body>
+</html>
