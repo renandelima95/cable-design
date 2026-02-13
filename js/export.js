@@ -75,18 +75,21 @@ const ExportManager = {
 
         // End Node connectors section
         csv += '\n\nCONECTORES POR END NODE\n';
-        csv += 'Node,Connector PN,Backshell Angle,Backshell PN,Boot Shrink Type,Boot Shrink PN\n';
+        csv += 'Node,Connector MPN,Connector PN,Backshell Angle,Backshell PN,Boot Shrink Type,Boot Shrink PN\n';
 
         const endNodes = AppState.nodes.filter(n => n.nodeType === 'end');
         endNodes.forEach(node => {
             const config = AppState.endNodeConfigs[node.name];
             if (!config) return;
 
+            const mpn = ConnectorUI.buildMPN(config);
+            const matched = ConnectorUI.findMatchingConnector(mpn);
             const backshell = ConnectorUI.getBackshellSuggestion(node.name);
             const bootShrink = ConnectorUI.getBootShrinkSuggestion(node.name);
 
             csv += `${node.name}`;
-            csv += `,${config.connector || ''}`;
+            csv += `,${mpn || ''}`;
+            csv += `,${matched ? matched.PN : ''}`;
             csv += `,${config.backshellAngle || ''}`;
             csv += `,${backshell ? backshell.PN : ''}`;
             csv += `,${config.bootShrinkType || ''}`;
@@ -164,14 +167,24 @@ const ExportManager = {
                 AppState.nodeIdCounter = project.nodeIdCounter || 0;
                 AppState.routeIdCounter = project.routeIdCounter || 0;
 
-                // Ensure end node configs exist for all end nodes
+                // Ensure end node configs exist and migrate old format
                 AppState.nodes.filter(n => n.nodeType === 'end').forEach(n => {
-                    if (!AppState.endNodeConfigs[n.name]) {
+                    const cfg = AppState.endNodeConfigs[n.name];
+                    if (!cfg) {
                         AppState.endNodeConfigs[n.name] = {
-                            connector: null,
-                            backshellAngle: 'straight',
-                            bootShrinkType: 'straight'
+                            series: null, coating: null, shellSize: null, insertArr: null,
+                            contactType: null, polarity: null,
+                            backshellAngle: 'straight', bootShrinkType: 'straight'
                         };
+                    } else if ('connector' in cfg && !('series' in cfg)) {
+                        // Migrate old format to new D38999 MPN format
+                        cfg.series = null;
+                        cfg.coating = null;
+                        cfg.shellSize = null;
+                        cfg.insertArr = null;
+                        cfg.contactType = null;
+                        cfg.polarity = null;
+                        delete cfg.connector;
                     }
                 });
 

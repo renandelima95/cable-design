@@ -722,3 +722,74 @@ input:focus, select:focus {
     font-weight: 600;
     text-align: right;
 }
+
+/* ---- D38999 MPN Builder ---- */
+.mpn-builder {
+    background: #edf2f7;
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 10px;
+    border-left: 4px solid #667eea;
+}
+
+.mpn-builder-title {
+    font-weight: 600;
+    color: #4a5568;
+    margin-bottom: 12px;
+    font-size: 0.95em;
+}
+
+.mpn-display {
+    background: white;
+    border-radius: 6px;
+    padding: 12px;
+    margin-top: 10px;
+    border: 1px solid #e2e8f0;
+}
+
+.mpn-display-title {
+    font-size: 0.8em;
+    color: #718096;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+
+.mpn-code {
+    font-family: 'Courier New', monospace;
+    font-size: 1.3em;
+    font-weight: 700;
+    color: #2c3e50;
+    letter-spacing: 1px;
+}
+
+.mpn-match {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #e2e8f0;
+    font-size: 0.9em;
+}
+
+.mpn-match .label {
+    color: #718096;
+    font-weight: 500;
+}
+
+.mpn-match .value {
+    color: #2d3748;
+    font-weight: 600;
+}
+
+.mpn-no-match {
+    margin-top: 6px;
+    color: #e53e3e;
+    font-size: 0.85em;
+    font-style: italic;
+}
+
+.mpn-placeholder {
+    color: #a0aec0;
+    font-size: 0.9em;
+    font-style: italic;
+}
