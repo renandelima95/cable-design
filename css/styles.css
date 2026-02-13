@@ -602,17 +602,6 @@ input:focus, select:focus {
     font-size: 0.95em;
 }
 
-.ramification-layout {
-    display: flex;
-    gap: 16px;
-    align-items: flex-start;
-}
-
-.ramification-data {
-    flex: 1;
-    min-width: 0;
-}
-
 .ramification-group {
     margin-bottom: 10px;
 }
@@ -659,13 +648,6 @@ input:focus, select:focus {
 
 .ramification-row.fit-error .ramification-value {
     color: #c53030;
-}
-
-.ramification-canvas {
-    flex-shrink: 0;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    background: #fff;
 }
 
 /* ---- Margin Control ---- */
