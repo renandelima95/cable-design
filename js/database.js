@@ -60,15 +60,19 @@ const Database = {
     },
 
     findBootShrink(type, backshellExternalDiameter, bundleDiameter) {
+        // Hard constraints: both must fit within max.
+        // Prefer smallest boot shrink (tightest fit, closest to min).
         return this.bootShrinks
             .filter(bs => bs.type === type)
-            .filter(bs => bs.minBackshellDiameter > 0 && bs.maxBackshellDiameter > 0)
-            .filter(bs =>
-                backshellExternalDiameter >= bs.minBackshellDiameter &&
-                backshellExternalDiameter <= bs.maxBackshellDiameter
-            )
-            .filter(bs => bs.minBundleDiameter > 0 && bs.maxBundleDiameter > 0)
-            .filter(bs => bundleDiameter >= bs.minBundleDiameter && bundleDiameter <= bs.maxBundleDiameter)
-            .sort((a, b) => a.maxBundleDiameter - b.maxBundleDiameter)[0] || null;
+            .filter(bs => bs.maxBackshellDiameter > 0 && bs.maxBundleDiameter > 0)
+            .filter(bs => backshellExternalDiameter <= bs.maxBackshellDiameter)
+            .filter(bs => bundleDiameter <= bs.maxBundleDiameter)
+            .sort((a, b) => a.maxBackshellDiameter - b.maxBackshellDiameter)[0] || null;
+    },
+
+    getCompatibleBootShrinks(type) {
+        return this.bootShrinks
+            .filter(bs => bs.type === type)
+            .sort((a, b) => a.maxBackshellDiameter - b.maxBackshellDiameter);
     }
 };

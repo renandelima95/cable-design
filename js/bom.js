@@ -85,7 +85,7 @@ const BomUI = {
 
         // 3. Boot Shrinks (category 3)
         endNodes.forEach(node => {
-            const bootShrink = ConnectorUI.getBootShrinkSuggestion(node.name);
+            const bootShrink = ConnectorUI.getSelectedBootShrink(node.name);
             if (bootShrink) {
                 addItem(bootShrink.PN, bootShrink.description, bootShrink.UOM || 'un', 1, bootShrink.MPN, 3);
             }

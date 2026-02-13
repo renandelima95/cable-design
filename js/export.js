@@ -85,7 +85,7 @@ const ExportManager = {
             const mpn = ConnectorUI.buildMPN(config);
             const matched = ConnectorUI.findMatchingConnector(mpn);
             const backshell = ConnectorUI.getSelectedBackshell(node.name);
-            const bootShrink = ConnectorUI.getBootShrinkSuggestion(node.name);
+            const bootShrink = ConnectorUI.getSelectedBootShrink(node.name);
 
             csv += `${node.name}`;
             csv += `,${mpn || ''}`;
@@ -175,7 +175,7 @@ const ExportManager = {
                             series: null, coating: null, shellSize: null, insertArr: null,
                             contactType: null, polarity: null,
                             backshellAngle: 'straight', bootShrinkType: 'straight',
-                            backshellOverrideMPN: null
+                            backshellOverrideMPN: null, bootShrinkOverrideMPN: null
                         };
                     } else if ('connector' in cfg && !('series' in cfg)) {
                         // Migrate old format to new D38999 MPN format
