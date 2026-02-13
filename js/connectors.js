@@ -164,17 +164,20 @@ const ConnectorUI = {
         }
         AppState.endNodeConfigs[nodeName].connector = value || null;
         this.render();
+        BomUI.update();
     },
 
     onBackshellAngleChange(nodeName, value) {
         if (!AppState.endNodeConfigs[nodeName]) return;
         AppState.endNodeConfigs[nodeName].backshellAngle = value;
         this.render();
+        BomUI.update();
     },
 
     onBootShrinkTypeChange(nodeName, value) {
         if (!AppState.endNodeConfigs[nodeName]) return;
         AppState.endNodeConfigs[nodeName].bootShrinkType = value;
         this.render();
+        BomUI.update();
     }
 };

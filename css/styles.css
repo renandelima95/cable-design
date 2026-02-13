@@ -685,3 +685,40 @@ input:focus, select:focus {
 .legend-dot.transition-node {
     background: #3498db;
 }
+
+/* ---- Bill of Materials Table ---- */
+.bom-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9em;
+}
+
+.bom-table thead {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.bom-table th {
+    padding: 12px 15px;
+    text-align: left;
+    font-weight: 600;
+}
+
+.bom-table td {
+    padding: 10px 15px;
+    border-bottom: 1px solid #e0e0e0;
+    color: #2c3e50;
+}
+
+.bom-table tbody tr:hover {
+    background: #f0f4ff;
+}
+
+.bom-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.bom-table .bom-qty {
+    font-weight: 600;
+    text-align: right;
+}

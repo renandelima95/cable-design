@@ -181,6 +181,7 @@ const ExportManager = {
                 App.updateResults();
                 BundleUI.update();
                 ConnectorUI.render();
+                BomUI.update();
 
                 alert('Projeto carregado com sucesso!');
             } catch (error) {

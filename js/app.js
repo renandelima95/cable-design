@@ -142,11 +142,13 @@ const App = {
         this.setNodeType('end');
         CanvasEditor.redraw();
         ConnectorUI.render();
+        BomUI.update();
 
         // Margin input listener
         document.getElementById('marginInput').addEventListener('input', () => {
             if (AppState.routes.length > 0) {
                 this.updateResults();
+                BomUI.update();
             }
         });
 
@@ -267,6 +269,7 @@ const App = {
         this.updateResults();
         BundleUI.update();
         ConnectorUI.render();
+        BomUI.update();
     },
 
     removeRoute(id) {
@@ -275,6 +278,7 @@ const App = {
         this.updateResults();
         BundleUI.update();
         ConnectorUI.render();
+        BomUI.update();
     },
 
     updateRoutesList() {
@@ -382,6 +386,7 @@ const App = {
             this.updateResults();
             BundleUI.update();
             ConnectorUI.render();
+            BomUI.update();
         }
     },
 
@@ -470,5 +475,6 @@ const App = {
         this.updateResults();
         BundleUI.update();
         ConnectorUI.render();
+        BomUI.update();
     }
 };
