@@ -66,7 +66,8 @@ const ExportManager = {
             for (const [name, count] of Object.entries(wireGroups)) {
                 csv += `${segment},${name},${count},${bundleData.diameter.toFixed(2)}`;
                 csv += `,${suggestions.braidTube ? suggestions.braidTube.PN : ''}`;
-                csv += `,${suggestions.tubeShrink ? suggestions.tubeShrink.PN : ''}`;
+                const selectedTs = ComponentSuggestions.getSelectedTubeShrink(segment, bundleData.diameter);
+                csv += `,${selectedTs ? selectedTs.PN : ''}`;
                 csv += `,${suggestions.markerSleeve ? suggestions.markerSleeve.PN : ''}`;
                 csv += `,${suggestions.clearTubeShrink ? suggestions.clearTubeShrink.PN : ''}`;
                 csv += '\n';
@@ -112,12 +113,13 @@ const ExportManager = {
         }
 
         const project = {
-            version: '2.0',
+            version: '2.1',
             timestamp: new Date().toISOString(),
             nodes: AppState.nodes,
             connections: AppState.connections,
             routes: AppState.routes,
             endNodeConfigs: AppState.endNodeConfigs,
+            segmentOverrides: AppState.segmentOverrides,
             nodeIdCounter: AppState.nodeIdCounter,
             routeIdCounter: AppState.routeIdCounter
         };
@@ -164,6 +166,7 @@ const ExportManager = {
                 AppState.connections = project.connections;
                 AppState.routes = project.routes || [];
                 AppState.endNodeConfigs = project.endNodeConfigs || {};
+                AppState.segmentOverrides = project.segmentOverrides || {};
                 AppState.nodeIdCounter = project.nodeIdCounter || 0;
                 AppState.routeIdCounter = project.routeIdCounter || 0;
 

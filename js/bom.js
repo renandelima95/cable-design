@@ -99,9 +99,10 @@ const BomUI = {
             const suggestions = ComponentSuggestions.getSuggestionsForSegment(bundleData.diameter);
             const segmentLengthM = (segmentDistanceMap[segment] || 0) * (1 + margin) / 1000;
 
-            // 4. Tube Shrink (category 4)
-            if (suggestions.tubeShrink) {
-                const ts = suggestions.tubeShrink;
+            // 4. Tube Shrink (category 4) - use override if set
+            const selectedTubeShrink = ComponentSuggestions.getSelectedTubeShrink(segment, bundleData.diameter);
+            if (selectedTubeShrink) {
+                const ts = selectedTubeShrink;
                 const qty = ts.UOM === 'un' ? 1 : segmentLengthM;
                 addItem(ts.PN, ts.description, ts.UOM || 'm', qty, ts.MPN, 4);
             }

@@ -6,6 +6,33 @@
 
 const ComponentSuggestions = {
 
+    getSelectedTubeShrink(segmentKey, bundleDiameter) {
+        const overrides = AppState.segmentOverrides[segmentKey];
+        if (overrides && overrides.tubeShrinkOverrideMPN) {
+            const ts = Database.tubeShrinks.find(t => t.MPN === overrides.tubeShrinkOverrideMPN);
+            if (ts) return ts;
+        }
+        const diameterAfterBraid = this._getDiameterAfterBraid(bundleDiameter);
+        return Database.findTubeShrink(diameterAfterBraid);
+    },
+
+    _getDiameterAfterBraid(bundleDiameter) {
+        const braidTube = Database.findBraidTube(bundleDiameter);
+        if (braidTube) {
+            return bundleDiameter + 2 * (braidTube.wallThickness || 0);
+        }
+        return bundleDiameter;
+    },
+
+    onTubeShrinkChange(segmentKey, value) {
+        if (!AppState.segmentOverrides[segmentKey]) {
+            AppState.segmentOverrides[segmentKey] = {};
+        }
+        AppState.segmentOverrides[segmentKey].tubeShrinkOverrideMPN = value || null;
+        BundleUI.update();
+        BomUI.markDirty();
+    },
+
     getSuggestionsForSegment(bundleDiameter) {
         const result = {
             bundleDiameter: bundleDiameter,
@@ -55,7 +82,7 @@ const ComponentSuggestions = {
         return result;
     },
 
-    renderComponentSuggestion(suggestion) {
+    renderComponentSuggestion(suggestion, segmentKey, bundleDiameter) {
         const esc = CanvasEditor.escapeHtml.bind(CanvasEditor);
 
         function formatComponent(label, component) {
@@ -75,11 +102,46 @@ const ComponentSuggestions = {
                 </div>`;
         }
 
+        // Build tube shrink override dropdown
+        const selectedTubeShrink = segmentKey
+            ? this.getSelectedTubeShrink(segmentKey, bundleDiameter)
+            : suggestion.tubeShrink;
+        const overrides = segmentKey ? (AppState.segmentOverrides[segmentKey] || {}) : {};
+        const currentOverrideMPN = overrides.tubeShrinkOverrideMPN || '';
+
+        let tubeShrinkHtml;
+        if (Database.tubeShrinks.length > 0 && segmentKey) {
+            const escapedKey = esc(segmentKey).replace(/'/g, "\\'");
+            let options = `<option value="">Auto (sugestão)</option>`;
+            Database.tubeShrinks.forEach(ts => {
+                const isSuggested = suggestion.tubeShrink && ts.MPN === suggestion.tubeShrink.MPN;
+                const selected = (currentOverrideMPN && ts.MPN === currentOverrideMPN) ? 'selected'
+                    : (!currentOverrideMPN && isSuggested) ? 'selected' : '';
+                const label = `${esc(ts.MPN)} — ${esc(ts.description || '')} (${ts.minDiameter}–${ts.maxDiameter} mm)${isSuggested ? ' (sugerido)' : ''}`;
+                options += `<option value="${esc(ts.MPN)}" ${selected}>${label}</option>`;
+            });
+            tubeShrinkHtml = `
+                <div class="component-row">
+                    <span class="component-label">Tube Shrink</span>
+                    <select class="component-override-select" onchange="ComponentSuggestions.onTubeShrinkChange('${escapedKey}', this.value)">
+                        ${options}
+                    </select>
+                </div>`;
+            if (selectedTubeShrink) {
+                tubeShrinkHtml += `
+                <div class="component-row" style="padding-left: 10px;">
+                    <span class="component-value">${esc(selectedTubeShrink.PN || '—')} — ${esc(selectedTubeShrink.description || '—')}</span>
+                </div>`;
+            }
+        } else {
+            tubeShrinkHtml = formatComponent('Tube Shrink', selectedTubeShrink);
+        }
+
         return `
             <div class="component-suggestion">
                 <div class="component-suggestion-title">Componentes Sugeridos</div>
                 ${formatComponent('Braid Tube', suggestion.braidTube)}
-                ${formatComponent('Tube Shrink', suggestion.tubeShrink)}
+                ${tubeShrinkHtml}
                 ${formatComponent('Marker Sleeve', suggestion.markerSleeve)}
                 ${formatComponent('Clear Tube Shrink', suggestion.clearTubeShrink)}
             </div>`;
