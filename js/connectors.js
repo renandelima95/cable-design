@@ -20,7 +20,7 @@ const ConnectorUI = {
 
         for (const [segmentKey, wires] of Object.entries(segmentBundles)) {
             if (segmentKey.includes(nodeName) && wires.length > 0) {
-                const bundleData = calculateWireBundle(wires);
+                const bundleData = BundleUI._bundleCache[segmentKey] || calculateWireBundle(wires);
                 if (bundleData.diameter > maxDiameter) {
                     maxDiameter = bundleData.diameter;
                 }
@@ -71,6 +71,19 @@ const ConnectorUI = {
         return Database.connectors.find(c => c.MPN === mpn) || null;
     },
 
+    getCompatibleBackshells(nodeName) {
+        const config = AppState.endNodeConfigs[nodeName];
+        if (!config || !config.shellSize) return [];
+
+        const shellSizeNum = this.getShellSizeNumber(config);
+        if (!shellSizeNum) return [];
+
+        const angle = config.backshellAngle || 'straight';
+        return Database.backshells
+            .filter(bs => bs.connectorShellSize === shellSizeNum && bs.angle === angle)
+            .sort((a, b) => a.maxBundleDiameter - b.maxBundleDiameter);
+    },
+
     getBackshellSuggestion(nodeName) {
         const config = AppState.endNodeConfigs[nodeName];
         if (!config || !config.shellSize) return null;
@@ -84,11 +97,23 @@ const ConnectorUI = {
         return Database.findBackshell(shellSizeNum, angle, bundleDiameter);
     },
 
+    getSelectedBackshell(nodeName) {
+        const config = AppState.endNodeConfigs[nodeName];
+        if (!config) return null;
+
+        if (config.backshellOverrideMPN) {
+            const backshell = Database.backshells.find(bs => bs.MPN === config.backshellOverrideMPN);
+            if (backshell) return backshell;
+        }
+
+        return this.getBackshellSuggestion(nodeName);
+    },
+
     getBootShrinkSuggestion(nodeName) {
         const config = AppState.endNodeConfigs[nodeName];
         if (!config) return null;
 
-        const backshell = this.getBackshellSuggestion(nodeName);
+        const backshell = this.getSelectedBackshell(nodeName);
         if (!backshell) return null;
 
         const bundleDiameter = this.getBundleDiameterAtNode(nodeName);
@@ -128,8 +153,13 @@ const ConnectorUI = {
             const mpn = this.buildMPN(config);
             const matchedConnector = this.findMatchingConnector(mpn);
 
-            const backshellSuggestion = this.getBackshellSuggestion(node.name);
+            const selectedBackshell = this.getSelectedBackshell(node.name);
+            const suggestedBackshell = this.getBackshellSuggestion(node.name);
+            const compatibleBackshells = this.getCompatibleBackshells(node.name);
             const bootShrinkSuggestion = this.getBootShrinkSuggestion(node.name);
+
+            const isUndersized = selectedBackshell && bundleDiameter > 0 &&
+                bundleDiameter > selectedBackshell.maxBundleDiameter;
 
             // --- Series dropdown ---
             let seriesOptions = '<option value="">Selecione...</option>';
@@ -172,6 +202,21 @@ const ConnectorUI = {
                 const selected = config.polarity === p.code ? 'selected' : '';
                 polarityOptions += `<option value="${p.code}" ${selected}>${p.code} - ${esc(p.name)}</option>`;
             });
+
+            // --- Backshell dropdown ---
+            let backshellOptions = '<option value="">Auto (sugestão)</option>';
+            const currentBackshellMPN = config.backshellOverrideMPN || (suggestedBackshell ? suggestedBackshell.MPN : '');
+            compatibleBackshells.forEach(bs => {
+                const isSuggested = suggestedBackshell && bs.MPN === suggestedBackshell.MPN;
+                const selected = bs.MPN === currentBackshellMPN ? 'selected' : '';
+                const label = `${esc(bs.MPN)} \u2014 Cable entry \u2264 ${bs.maxBundleDiameter} mm${isSuggested ? ' (sugerido)' : ''}`;
+                backshellOptions += `<option value="${bs.MPN}" ${selected}>${label}</option>`;
+            });
+
+            let backshellWarningHtml = '';
+            if (isUndersized) {
+                backshellWarningHtml = `<div class="backshell-warning">Bundle (${bundleDiameter.toFixed(2)} mm) excede cable entry máx. (${selectedBackshell.maxBundleDiameter} mm)</div>`;
+            }
 
             // --- MPN display ---
             let mpnHtml;
@@ -272,8 +317,15 @@ const ConnectorUI = {
                     </div>
 
                     <div class="suggestion-box">
-                        <div class="suggestion-box-title">Backshell Suggestion</div>
-                        ${this.renderSuggestion(backshellSuggestion)}
+                        <div class="suggestion-box-title">Backshell</div>
+                        <div class="input-row" style="margin-bottom: 8px;">
+                            <select onchange="ConnectorUI.onBackshellChange('${esc(node.name)}', this.value)"
+                                    ${compatibleBackshells.length === 0 ? 'disabled' : ''}>
+                                ${backshellOptions}
+                            </select>
+                        </div>
+                        ${this.renderSuggestion(selectedBackshell)}
+                        ${backshellWarningHtml}
                     </div>
 
                     <div class="suggestion-box" style="margin-top: 10px;">
@@ -312,12 +364,16 @@ const ConnectorUI = {
             AppState.endNodeConfigs[nodeName] = {
                 series: null, coating: null, shellSize: null, insertArr: null,
                 contactType: null, polarity: null,
-                backshellAngle: 'straight', bootShrinkType: 'straight'
+                backshellAngle: 'straight', bootShrinkType: 'straight',
+                backshellOverrideMPN: null
             };
         }
         AppState.endNodeConfigs[nodeName][field] = value || null;
+        if (field === 'backshellAngle') {
+            AppState.endNodeConfigs[nodeName].backshellOverrideMPN = null;
+        }
         this.render();
-        BomUI.update();
+        BomUI.markDirty();
     },
 
     onShellSizeChange(nodeName, value) {
@@ -325,12 +381,21 @@ const ConnectorUI = {
             AppState.endNodeConfigs[nodeName] = {
                 series: null, coating: null, shellSize: null, insertArr: null,
                 contactType: null, polarity: null,
-                backshellAngle: 'straight', bootShrinkType: 'straight'
+                backshellAngle: 'straight', bootShrinkType: 'straight',
+                backshellOverrideMPN: null
             };
         }
         AppState.endNodeConfigs[nodeName].shellSize = value || null;
         AppState.endNodeConfigs[nodeName].insertArr = null;
+        AppState.endNodeConfigs[nodeName].backshellOverrideMPN = null;
         this.render();
-        BomUI.update();
+        BomUI.markDirty();
+    },
+
+    onBackshellChange(nodeName, value) {
+        if (!AppState.endNodeConfigs[nodeName]) return;
+        AppState.endNodeConfigs[nodeName].backshellOverrideMPN = value || null;
+        this.render();
+        BomUI.markDirty();
     }
 };
