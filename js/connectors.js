@@ -399,7 +399,6 @@ const ConnectorUI = {
 
         html += '</div>';
         container.innerHTML = html;
-        setTimeout(() => this.drawRamificationDiagrams(), 50);
     },
 
     renderSuggestion(item) {
@@ -501,7 +500,6 @@ const ConnectorUI = {
         const bundle = bundleDiameter > 0 ? bundleDiameter : null;
 
         const fmt = (v) => v !== null && v !== undefined ? v.toFixed(1) : '\u2014';
-        const canvasId = `ramif-${nodeName.replace(/[^a-zA-Z0-9]/g, '')}`;
 
         // Fit status for BS side
         let bsFit = '';
@@ -522,236 +520,37 @@ const ConnectorUI = {
         return `
             <div class="ramification-info">
                 <div class="ramification-title">Ramification Detail</div>
-                <div class="ramification-layout">
-                    <div class="ramification-data">
-                        <div class="ramification-group">
-                            <div class="ramification-group-title">Backshell Side</div>
-                            <div class="ramification-row ${bsFit}">
-                                <span class="ramification-label">Backshell Ext. \u00D8</span>
-                                <span class="ramification-value">${fmt(bsOD)} mm</span>
-                            </div>
-                            <div class="ramification-row">
-                                <span class="ramification-label">Boot Max (BS Side)</span>
-                                <span class="ramification-value">${fmt(bootBSMax)} mm</span>
-                            </div>
-                            <div class="ramification-row">
-                                <span class="ramification-label">Boot Min (BS Side)</span>
-                                <span class="ramification-value">${fmt(bootBSMin)} mm</span>
-                            </div>
-                        </div>
-                        <div class="ramification-group">
-                            <div class="ramification-group-title">Wiring Side</div>
-                            <div class="ramification-row ${wireFit}">
-                                <span class="ramification-label">Wiring Bundle \u00D8</span>
-                                <span class="ramification-value">${fmt(bundle)} mm</span>
-                            </div>
-                            <div class="ramification-row">
-                                <span class="ramification-label">Boot Max (Wire Side)</span>
-                                <span class="ramification-value">${fmt(bootWireMax)} mm</span>
-                            </div>
-                            <div class="ramification-row">
-                                <span class="ramification-label">Boot Min (Wire Side)</span>
-                                <span class="ramification-value">${fmt(bootWireMin)} mm</span>
-                            </div>
-                        </div>
+                <div class="ramification-group">
+                    <div class="ramification-group-title">Backshell Side</div>
+                    <div class="ramification-row ${bsFit}">
+                        <span class="ramification-label">Backshell Ext. \u00D8</span>
+                        <span class="ramification-value">${fmt(bsOD)} mm</span>
                     </div>
-                    <canvas id="${canvasId}" class="ramification-canvas" width="340" height="180"></canvas>
+                    <div class="ramification-row">
+                        <span class="ramification-label">Boot - BS Side - As Supplied</span>
+                        <span class="ramification-value">${fmt(bootBSMax)} mm</span>
+                    </div>
+                    <div class="ramification-row">
+                        <span class="ramification-label">Boot - BS Side - After Shrinking</span>
+                        <span class="ramification-value">${fmt(bootBSMin)} mm</span>
+                    </div>
+                </div>
+                <div class="ramification-group">
+                    <div class="ramification-group-title">Bundle Side</div>
+                    <div class="ramification-row ${wireFit}">
+                        <span class="ramification-label">Wiring Bundle \u00D8</span>
+                        <span class="ramification-value">${fmt(bundle)} mm</span>
+                    </div>
+                    <div class="ramification-row">
+                        <span class="ramification-label">Boot - Bundle Side - As Supplied</span>
+                        <span class="ramification-value">${fmt(bootWireMax)} mm</span>
+                    </div>
+                    <div class="ramification-row">
+                        <span class="ramification-label">Boot - Bundle Side - After Shrinking</span>
+                        <span class="ramification-value">${fmt(bootWireMin)} mm</span>
+                    </div>
                 </div>
             </div>`;
     },
 
-    drawRamificationDiagrams() {
-        const endNodes = this.getEndNodes();
-        endNodes.forEach(node => {
-            const canvasId = `ramif-${node.name.replace(/[^a-zA-Z0-9]/g, '')}`;
-            const canvas = document.getElementById(canvasId);
-            if (!canvas) return;
-
-            const backshell = this.getSelectedBackshell(node.name);
-            const bootShrink = this.getSelectedBootShrink(node.name);
-            const bundleDiameter = this.getBundleDiameterAtNode(node.name);
-
-            if (!backshell && !bootShrink) return;
-
-            const ctx = canvas.getContext('2d');
-            const W = canvas.width;
-            const H = canvas.height;
-            ctx.clearRect(0, 0, W, H);
-
-            const bsOD = backshell ? backshell.outputExternalDiameter : 20;
-            const bundle = bundleDiameter > 0 ? bundleDiameter : 5;
-            const bootBSMax = bootShrink ? bootShrink.maxBackshellDiameter : bsOD;
-            const bootWireMax = bootShrink ? bootShrink.maxBundleDiameter : bundle;
-
-            // Scale: map the largest diameter to fit in canvas height with padding
-            const maxDiam = Math.max(bsOD, bootBSMax, bootWireMax, bundle, 10);
-            const vPad = 36;
-            const scale = (H - vPad * 2) / maxDiam;
-
-            const centerY = H / 2;
-
-            // Layout: left = backshell side, right = wiring side
-            const bsX = 60;       // backshell exit center x
-            const bootLen = 160;   // boot shrink length
-            const wireX = bsX + bootLen; // wiring side x
-
-            // Heights (half-heights for drawing)
-            const bsH = bsOD * scale / 2;
-            const wireH = bundle * scale / 2;
-
-            // --- Draw backshell stub ---
-            ctx.fillStyle = '#718096';
-            ctx.beginPath();
-            const bsStubLen = 35;
-            ctx.moveTo(bsX - bsStubLen, centerY - bsH - 4);
-            ctx.lineTo(bsX, centerY - bsH);
-            ctx.lineTo(bsX, centerY + bsH);
-            ctx.lineTo(bsX - bsStubLen, centerY + bsH + 4);
-            ctx.closePath();
-            ctx.fill();
-
-            // Backshell label
-            ctx.fillStyle = '#4a5568';
-            ctx.font = '10px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText('Backshell', bsX - bsStubLen / 2, centerY - bsH - 10);
-
-            // --- Draw boot shrink (tapered shape) ---
-            const bootColor = '#e2e8f0';
-            const bootStroke = '#a0aec0';
-
-            // Determine if 90-deg
-            const config = AppState.endNodeConfigs[node.name] || {};
-            const is90 = (config.bootShrinkType || 'straight') === '90-deg';
-
-            ctx.fillStyle = bootColor;
-            ctx.strokeStyle = bootStroke;
-            ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            if (is90) {
-                // 90-deg boot: goes down then right
-                const bendX = bsX + bootLen * 0.45;
-                const bendY = centerY + bsH + 20;
-                ctx.moveTo(bsX, centerY - bsH);
-                ctx.lineTo(bendX, centerY - bsH);
-                ctx.quadraticCurveTo(bendX + 15, centerY - bsH, bendX + 15, bendY - wireH);
-                ctx.lineTo(wireX, bendY - wireH);
-                ctx.lineTo(wireX, bendY + wireH);
-                ctx.lineTo(bendX + 15, bendY + wireH);
-                ctx.quadraticCurveTo(bendX + 15, centerY + bsH, bendX, centerY + bsH);
-                ctx.lineTo(bsX, centerY + bsH);
-            } else {
-                // Straight boot: tapered cone
-                ctx.moveTo(bsX, centerY - bsH);
-                ctx.lineTo(wireX, centerY - wireH);
-                ctx.lineTo(wireX, centerY + wireH);
-                ctx.lineTo(bsX, centerY + bsH);
-            }
-            ctx.closePath();
-            ctx.fill();
-            ctx.stroke();
-
-            // Boot shrink label
-            ctx.fillStyle = '#4a5568';
-            ctx.font = '10px sans-serif';
-            ctx.textAlign = 'center';
-            if (is90) {
-                ctx.fillText('Boot Shrink (90\u00B0)', bsX + bootLen / 2, centerY - bsH - 10);
-            } else {
-                ctx.fillText('Boot Shrink', bsX + bootLen / 2, centerY - Math.max(bsH, wireH) - 10);
-            }
-
-            // --- Draw wiring bundle ---
-            const wireStubLen = 50;
-            ctx.fillStyle = '#bee3f8';
-            ctx.strokeStyle = '#3182ce';
-            ctx.lineWidth = 1;
-
-            const wireEndY = is90 ? (centerY + bsH + 20) : centerY;
-
-            ctx.beginPath();
-            ctx.moveTo(wireX, wireEndY - wireH);
-            ctx.lineTo(wireX + wireStubLen, wireEndY - wireH);
-            ctx.lineTo(wireX + wireStubLen, wireEndY + wireH);
-            ctx.lineTo(wireX, wireEndY + wireH);
-            ctx.closePath();
-            ctx.fill();
-            ctx.stroke();
-
-            // Draw individual wires hint
-            const wireCount = Math.min(Math.round(wireH * 2 / 3), 8);
-            ctx.strokeStyle = '#2b6cb0';
-            ctx.lineWidth = 0.8;
-            for (let i = 0; i < wireCount; i++) {
-                const wy = wireEndY - wireH + (wireH * 2) * (i + 0.5) / wireCount;
-                ctx.beginPath();
-                ctx.moveTo(wireX + 2, wy);
-                ctx.lineTo(wireX + wireStubLen - 2, wy);
-                ctx.stroke();
-            }
-
-            ctx.fillStyle = '#4a5568';
-            ctx.font = '10px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText('Bundle', wireX + wireStubLen / 2, wireEndY - wireH - 8);
-
-            // --- Dimension annotations ---
-            ctx.fillStyle = '#e53e3e';
-            ctx.font = 'bold 9px sans-serif';
-            ctx.textAlign = 'left';
-
-            // BS side dimension
-            const dimX = bsX - bsStubLen - 8;
-            ctx.strokeStyle = '#e53e3e';
-            ctx.lineWidth = 0.8;
-            ctx.beginPath();
-            ctx.moveTo(dimX, centerY - bsH);
-            ctx.lineTo(dimX, centerY + bsH);
-            ctx.stroke();
-            // Arrowheads
-            ctx.beginPath();
-            ctx.moveTo(dimX - 3, centerY - bsH + 5);
-            ctx.lineTo(dimX, centerY - bsH);
-            ctx.lineTo(dimX + 3, centerY - bsH + 5);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(dimX - 3, centerY + bsH - 5);
-            ctx.lineTo(dimX, centerY + bsH);
-            ctx.lineTo(dimX + 3, centerY + bsH - 5);
-            ctx.stroke();
-
-            ctx.save();
-            ctx.translate(dimX - 4, centerY);
-            ctx.rotate(-Math.PI / 2);
-            ctx.textAlign = 'center';
-            ctx.fillText(`\u00D8 ${bsOD.toFixed(1)}`, 0, 0);
-            ctx.restore();
-
-            // Wire side dimension
-            const wireDimX = wireX + wireStubLen + 8;
-            ctx.strokeStyle = '#3182ce';
-            ctx.fillStyle = '#3182ce';
-            ctx.beginPath();
-            ctx.moveTo(wireDimX, wireEndY - wireH);
-            ctx.lineTo(wireDimX, wireEndY + wireH);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(wireDimX - 3, wireEndY - wireH + 5);
-            ctx.lineTo(wireDimX, wireEndY - wireH);
-            ctx.lineTo(wireDimX + 3, wireEndY - wireH + 5);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(wireDimX - 3, wireEndY + wireH - 5);
-            ctx.lineTo(wireDimX, wireEndY + wireH);
-            ctx.lineTo(wireDimX + 3, wireEndY + wireH - 5);
-            ctx.stroke();
-
-            ctx.save();
-            ctx.translate(wireDimX + 4, wireEndY);
-            ctx.rotate(-Math.PI / 2);
-            ctx.textAlign = 'center';
-            ctx.fillText(`\u00D8 ${bundle.toFixed(1)}`, 0, 0);
-            ctx.restore();
-        });
-    }
 };
