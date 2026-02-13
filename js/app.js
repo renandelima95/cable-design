@@ -8,6 +8,7 @@ const AppState = {
     connections: [],
     routes: [],
     endNodeConfigs: {},   // { nodeName: { connector, backshellAngle, bootShrinkType } }
+    segmentOverrides: {}, // { segmentKey: { tubeShrinkOverrideMPN: null } }
 
     mode: 'addNode',
     selectedNodeType: 'end',  // 'end' or 'transition'
@@ -113,7 +114,7 @@ const BundleUI = {
             html += `
                         </div>
                     </div>
-                    ${ComponentSuggestions.renderComponentSuggestion(suggestions)}
+                    ${ComponentSuggestions.renderComponentSuggestion(suggestions, segment, bundleData.diameter)}
                 </div>`;
         }
 
